@@ -1,0 +1,49 @@
+[package]
+name = "movideoplayer"
+version = "0.1.0"
+description = "A native Windows video player built on Tauri and mpv"
+edition = "2021"
+rust-version = "1.75"
+
+[lib]
+name = "movideoplayer_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["devtools"] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "macros",
+    "net",
+    "process",
+    "sync",
+    "time",
+    "io-util",
+] }
+window-vibrancy = "0.7"
+raw-window-handle = "0.6"
+blake3 = { version = "1", features = ["pure"] }
+uuid = { version = "1", features = ["v4"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Shell",
+    "Win32_Graphics_Dwm",
+    "Win32_System_LibraryLoader",
+] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"

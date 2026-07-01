@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  /* Transparent so mpv's embedded child window (one Z-level below the
+     WebView2 surface) shows through wherever the DOM doesn't paint
+     something opaque. See window/embed.rs. */
+  background: transparent;
+  color-scheme: dark;
+  font-family: -apple-system, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  user-select: none;
+}
+
+* {
+  box-sizing: border-box;
+}

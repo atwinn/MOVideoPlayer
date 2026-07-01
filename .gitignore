@@ -1,0 +1,15 @@
+node_modules
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+
+src-tauri/target
+src-tauri/gen/schemas
+src-tauri/resources/mpv/*
+!src-tauri/resources/mpv/.gitkeep
+
+.DS_Store
+._*
+
+*.log
