@@ -41,7 +41,7 @@ so end users never need mpv installed separately.
 ```
 npm ci
 ./scripts/fetch-mpv.ps1   # Windows only — stages mpv.exe + DLLs
-npx tauri build -- --bundles msi,nsis
+npx tauri build --bundles msi,nsis
 ```
 
 ## Developing on macOS
