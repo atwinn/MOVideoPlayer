@@ -118,15 +118,20 @@ pub async fn mpv_load_file(
     path: String,
     append: bool,
 ) -> Result<(), String> {
+    tracing::info!("mpv_load_file called: path={path:?} append={append}");
     let client = require_ipc(&state).await?;
     let mode = if append { "append-play" } else { "replace" };
-    client
+    let result = client
         .command(vec![
             Value::String("loadfile".into()),
             Value::String(path.clone()),
             Value::String(mode.into()),
         ])
-        .await?;
+        .await;
+    if let Err(e) = &result {
+        tracing::error!("loadfile IPC command failed: {e}");
+    }
+    result?;
 
     if !append {
         *state.current_file.write().await = Some(path.clone());

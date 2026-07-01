@@ -15,7 +15,9 @@ use state::AppState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let _ = tracing_subscriber::fmt::try_init();
+    let _ = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .try_init();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -41,8 +43,19 @@ pub fn run() {
                 .path()
                 .resolve("resources/mpv/mpv.exe", tauri::path::BaseDirectory::Resource)
                 .expect("bundled mpv.exe resource path must be resolvable");
+            tracing::info!("resolved bundled mpv path: {}", bundled_mpv.display());
+            tracing::info!("mpv binary exists on disk: {}", bundled_mpv.exists());
 
-            let main_hwnd = window::embed::main_hwnd(&main_window).unwrap_or(0);
+            let main_hwnd = match window::embed::main_hwnd(&main_window) {
+                Ok(hwnd) => {
+                    tracing::info!("main window hwnd: {hwnd}");
+                    hwnd
+                }
+                Err(e) => {
+                    tracing::error!("failed to get main window hwnd: {e}");
+                    0
+                }
+            };
             let mpv_controller = MpvController::new(bundled_mpv, main_hwnd);
 
             let app_state = AppState::new(Arc::clone(&mpv_controller), Arc::clone(&persistence));
@@ -82,25 +95,35 @@ pub fn run() {
                 let app_handle = app.handle().clone();
                 let mpv_controller = Arc::clone(&mpv_controller);
                 tauri::async_runtime::spawn(async move {
+                    tracing::info!("starting mpv...");
                     if let Err(e) = mpv_controller.start().await {
                         tracing::error!("failed to start mpv: {e}");
                         let _ = app_handle.emit("mpv://event", ControllerEvent::StartFailed(e.to_string()));
                         return;
                     }
+                    tracing::info!("mpv started and IPC connected");
 
-                    if let Some(pid) = mpv_controller.pid().await {
-                        let state = app_handle.state::<AppState>();
-                        let main_hwnd = state.main_hwnd.load(std::sync::atomic::Ordering::Relaxed);
-                        match window::embed::embed_and_resize(main_hwnd, pid) {
-                            Ok(child_hwnd) => state.set_mpv_child_hwnd(child_hwnd),
-                            Err(e) => tracing::warn!("mpv window embed failed: {e}"),
+                    match mpv_controller.pid().await {
+                        Some(pid) => {
+                            tracing::info!("mpv pid: {pid}, embedding window...");
+                            let state = app_handle.state::<AppState>();
+                            let main_hwnd = state.main_hwnd.load(std::sync::atomic::Ordering::Relaxed);
+                            match window::embed::embed_and_resize(main_hwnd, pid) {
+                                Ok(child_hwnd) => {
+                                    tracing::info!("mpv child hwnd embedded: {child_hwnd}");
+                                    state.set_mpv_child_hwnd(child_hwnd);
+                                }
+                                Err(e) => tracing::warn!("mpv window embed failed: {e}"),
+                            }
                         }
+                        None => tracing::warn!("mpv started but pid() returned None (unexpected)"),
                     }
 
                     let mut events = mpv_controller.subscribe();
                     loop {
                         match events.recv().await {
                             Ok(event) => {
+                                tracing::debug!("mpv event: {event:?}");
                                 let _ = app_handle.emit("mpv://event", &event);
                                 if let ControllerEvent::Crashed = event {
                                     let state = app_handle.state::<AppState>();
