@@ -72,9 +72,14 @@ before checking; do the same before any other `cargo` invocation:
 find . -name '._*' -not -path '*/node_modules/*' -delete
 ```
 
-`src-tauri/.cargo/config.toml` points `CARGO_TARGET_DIR` at an APFS path
-(`~/.cache/movideoplayer-target`) so Cargo's own build artifacts don't
-land back on exFAT.
+Also point `CARGO_TARGET_DIR` at an APFS path so Cargo's own build output
+doesn't land back on exFAT — as an **environment variable**, e.g.
+`export CARGO_TARGET_DIR="$HOME/.cache/movideoplayer-target"`, not a
+committed `.cargo/config.toml`. A machine-specific absolute path baked
+into a checked-in config file would also apply on CI's Windows runner and
+silently redirect build output away from `src-tauri/target`, which is
+exactly where the release workflow expects to find the `.msi`/`.exe` to
+upload (this bit us once — see git history).
 
 ## Architecture
 

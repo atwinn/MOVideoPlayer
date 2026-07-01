@@ -26,4 +26,12 @@ else
 fi
 
 cd src-tauri
+
+# Redirect Cargo's own build output to an APFS path so regenerated
+# permission/codegen files never land back on the exFAT volume. This is
+# deliberately an env var, not a committed .cargo/config.toml — a
+# machine-specific absolute target-dir baked into the repo would also
+# apply on CI's Windows runner and silently move build output away from
+# the src-tauri/target path the release workflow expects to upload from.
+export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$HOME/.cache/movideoplayer-target}"
 cargo check --target x86_64-pc-windows-msvc
