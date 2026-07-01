@@ -23,6 +23,12 @@ pub enum ControllerEvent {
     Crashed,
     Respawned,
     RespawnFailed,
+    /// mpv never came up at all (bad binary path, spawn failure, IPC
+    /// connect timeout...). Distinct from `Crashed`, which implies it was
+    /// running first. Without this, a failed startup is invisible to the
+    /// user — the release build has no console attached, so `tracing`
+    /// output goes nowhere anyone can see.
+    StartFailed(String),
 }
 
 struct Session {

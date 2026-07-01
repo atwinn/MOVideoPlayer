@@ -20,11 +20,15 @@ interface PlayerState {
   tracks: TrackList;
   chapters: Chapter[];
   mpvAlive: boolean;
+  /// Surfaced from Rust so a failed mpv startup/load is visible instead
+  /// of silent — see EmptyState.tsx and lib/mpvEvents.ts.
+  lastError: string | null;
 
   setFilePath: (path: string | null) => void;
   applyPropertyChange: (name: string, data: unknown) => void;
   setTracks: (tracks: TrackList) => void;
   setMpvAlive: (alive: boolean) => void;
+  setLastError: (message: string | null) => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set) => ({
@@ -40,6 +44,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   tracks: { audio: [], subtitle: [] },
   chapters: [],
   mpvAlive: false,
+  lastError: null,
 
   setFilePath: (path) => set({ filePath: path }),
 
@@ -80,4 +85,5 @@ export const usePlayerStore = create<PlayerState>((set) => ({
 
   setTracks: (tracks) => set({ tracks }),
   setMpvAlive: (alive) => set({ mpvAlive: alive }),
+  setLastError: (message) => set({ lastError: message }),
 }));

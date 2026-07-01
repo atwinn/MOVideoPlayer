@@ -2,6 +2,7 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { useEffect, useState } from "react";
 
 import { mpvLoadFile, mpvLoadSubtitle } from "../../lib/tauriCommands";
+import { usePlayerStore } from "../../store/playerStore";
 
 const VIDEO_EXTENSIONS = ["mp4", "mkv", "mov", "avi", "webm", "flv", "ts", "mpg", "mpeg", "m3u8"];
 const SUBTITLE_EXTENSIONS = ["srt", "ass", "ssa", "vtt"];
@@ -15,6 +16,8 @@ function extensionOf(path: string): string {
 /// shows a subtle highlight while a drag is in-flight.
 export function DropZone() {
   const [isDragging, setIsDragging] = useState(false);
+  const setFilePath = usePlayerStore((s) => s.setFilePath);
+  const setLastError = usePlayerStore((s) => s.setLastError);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -32,10 +35,14 @@ export function DropZone() {
           const subtitlePaths = paths.filter((p) => SUBTITLE_EXTENSIONS.includes(extensionOf(p)));
 
           if (videoPath) {
-            void mpvLoadFile(videoPath, false);
+            mpvLoadFile(videoPath, false)
+              .then(() => setFilePath(videoPath))
+              .catch((err) => setLastError(`Couldn't open "${videoPath}": ${String(err)}`));
           }
           for (const subtitlePath of subtitlePaths) {
-            void mpvLoadSubtitle(subtitlePath);
+            mpvLoadSubtitle(subtitlePath).catch((err) =>
+              setLastError(`Couldn't load subtitle "${subtitlePath}": ${String(err)}`),
+            );
           }
         }
       })
@@ -44,7 +51,7 @@ export function DropZone() {
       });
 
     return () => unlisten?.();
-  }, []);
+  }, [setFilePath, setLastError]);
 
   if (!isDragging) return null;
 

@@ -1,8 +1,10 @@
 import { useEffect } from "react";
+import { AlertTriangle, X } from "lucide-react";
 
 import { DropZone } from "./components/dnd/DropZone";
 import { EmptyState } from "./components/overlay/EmptyState";
 import { OverlayLayer } from "./components/overlay/OverlayLayer";
+import { CustomTitlebar } from "./components/titlebar/CustomTitlebar";
 import { resolveAction } from "./lib/shortcuts/registry";
 import { runAction } from "./lib/shortcuts/actions";
 import { initMpvEventBridge } from "./lib/mpvEvents";
@@ -20,6 +22,8 @@ function isTypingIntoInput(target: EventTarget | null): boolean {
 
 export default function App() {
   const filePath = usePlayerStore((s) => s.filePath);
+  const lastError = usePlayerStore((s) => s.lastError);
+  const setLastError = usePlayerStore((s) => s.setLastError);
   const loadSettings = useSettingsStore((s) => s.load);
   const setHideTimeoutMs = useUiStore((s) => s.setHideTimeoutMs);
 
@@ -62,7 +66,22 @@ export default function App() {
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <DropZone />
+      <CustomTitlebar />
       {filePath ? <OverlayLayer /> : <EmptyState />}
+      {lastError && (
+        <div className="absolute bottom-4 left-1/2 z-30 flex max-w-md -translate-x-1/2 items-start gap-2 rounded-glass border border-glass-border bg-red-950/80 px-4 py-3 text-sm text-white shadow-2xl backdrop-blur-glass">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-red-300" />
+          <span className="flex-1">{lastError}</span>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => setLastError(null)}
+            className="shrink-0 text-white/60 hover:text-white"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -30,9 +30,16 @@ pub fn run() {
                 .expect("app data dir must be resolvable");
             let persistence = Arc::new(PersistenceStore::load(&app_data_dir));
 
+            // bundle.resources in tauri.conf.json is the glob string
+            // "resources/mpv/*" — Tauri's resource bundler preserves the
+            // full relative path (including the "resources/" segment)
+            // under $RESOURCE, it does NOT flatten to "mpv/*". Resolving
+            // the wrong path here means Command::spawn silently fails
+            // with a missing-file error that never reaches the user (see
+            // the emit below for how we now surface it).
             let bundled_mpv = app
                 .path()
-                .resolve("mpv/mpv.exe", tauri::path::BaseDirectory::Resource)
+                .resolve("resources/mpv/mpv.exe", tauri::path::BaseDirectory::Resource)
                 .expect("bundled mpv.exe resource path must be resolvable");
 
             let main_hwnd = window::embed::main_hwnd(&main_window).unwrap_or(0);
@@ -77,6 +84,7 @@ pub fn run() {
                 tauri::async_runtime::spawn(async move {
                     if let Err(e) = mpv_controller.start().await {
                         tracing::error!("failed to start mpv: {e}");
+                        let _ = app_handle.emit("mpv://event", ControllerEvent::StartFailed(e.to_string()));
                         return;
                     }
 

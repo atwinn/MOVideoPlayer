@@ -8,12 +8,19 @@ import { usePlayerStore } from "../../store/playerStore";
 export function EmptyState() {
   const [urlDialogOpen, setUrlDialogOpen] = useState(false);
   const setFilePath = usePlayerStore((s) => s.setFilePath);
+  const setLastError = usePlayerStore((s) => s.setLastError);
 
   const openFile = async () => {
     const path = await openVideoDialog();
-    if (path) {
+    if (!path) return;
+    try {
       await mpvLoadFile(path, false);
       setFilePath(path);
+    } catch (err) {
+      // A rejected invoke() here previously failed completely silently —
+      // the UI just never switched away from this screen with no
+      // indication why. Surface it instead.
+      setLastError(`Couldn't open "${path}": ${String(err)}`);
     }
   };
 

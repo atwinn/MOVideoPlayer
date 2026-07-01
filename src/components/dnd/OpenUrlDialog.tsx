@@ -7,14 +7,19 @@ import { usePlayerStore } from "../../store/playerStore";
 export function OpenUrlDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [url, setUrl] = useState("");
   const setFilePath = usePlayerStore((s) => s.setFilePath);
+  const setLastError = usePlayerStore((s) => s.setLastError);
 
-  const submit = () => {
+  const submit = async () => {
     const trimmed = url.trim();
     if (!trimmed) return;
-    void mpvLoadFile(trimmed, false);
-    setFilePath(trimmed);
-    setUrl("");
-    onClose();
+    try {
+      await mpvLoadFile(trimmed, false);
+      setFilePath(trimmed);
+      setUrl("");
+      onClose();
+    } catch (err) {
+      setLastError(`Couldn't open "${trimmed}": ${String(err)}`);
+    }
   };
 
   return (
@@ -41,7 +46,7 @@ export function OpenUrlDialog({ open, onClose }: { open: boolean; onClose: () =>
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") submit();
+                if (e.key === "Enter") void submit();
                 if (e.key === "Escape") onClose();
               }}
               placeholder="https://, rtsp://, smb://, ..."
@@ -57,7 +62,7 @@ export function OpenUrlDialog({ open, onClose }: { open: boolean; onClose: () =>
               </button>
               <button
                 type="button"
-                onClick={submit}
+                onClick={() => void submit()}
                 className="rounded-lg bg-white px-3 py-1.5 text-sm text-black hover:bg-white/90"
               >
                 Open

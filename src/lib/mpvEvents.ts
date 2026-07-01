@@ -26,12 +26,19 @@ export async function initMpvEventBridge(): Promise<UnlistenFn> {
       }
       case "Crashed":
         player.setMpvAlive(false);
+        player.setLastError("Playback engine stopped unexpectedly. Trying to recover…");
         break;
       case "Respawned":
         player.setMpvAlive(true);
+        player.setLastError(null);
         break;
       case "RespawnFailed":
         player.setMpvAlive(false);
+        player.setLastError("Playback engine crashed and could not restart. Try restarting the app.");
+        break;
+      case "StartFailed":
+        player.setMpvAlive(false);
+        player.setLastError(`Couldn't start the playback engine: ${event.payload}`);
         break;
     }
   });

@@ -1,5 +1,4 @@
 import { useUiStore } from "../../store/uiStore";
-import { CustomTitlebar } from "../titlebar/CustomTitlebar";
 import { CenterTransport } from "./CenterTransport";
 import { ChapterPanel } from "./ChapterPanel";
 import { Timeline } from "./Timeline";
@@ -22,16 +21,12 @@ export function OverlayLayer() {
 
   return (
     <div
-      className="absolute inset-0 flex flex-col justify-between"
+      className="absolute inset-0 flex flex-col justify-end"
       onMouseMove={showOverlay}
       onClick={(e) => {
         if (e.target === e.currentTarget) toggleOverlay();
       }}
     >
-      <div className={`transition-opacity duration-200 ${visibilityClass}`}>
-        <CustomTitlebar />
-      </div>
-
       {!cleanMode && <ChapterPanel />}
 
       <div

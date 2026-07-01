@@ -71,4 +71,5 @@ export type ControllerEvent =
   | { kind: "Mpv"; payload: MpvEvent }
   | { kind: "Crashed" }
   | { kind: "Respawned" }
-  | { kind: "RespawnFailed" };
+  | { kind: "RespawnFailed" }
+  | { kind: "StartFailed"; payload: string };

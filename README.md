@@ -46,12 +46,16 @@ npx tauri build --bundles msi,nsis
 
 ## Developing on macOS
 
-You can't run the app, but you can typecheck everything:
+You can't run the app, but you can typecheck everything. **Every** `cargo`
+invocation needs the exFAT workaround below first, including a plain
+`cargo check` — not just `check-windows.sh`:
 
 ```
-npm run build                # frontend: tsc + vite build
-(cd src-tauri && cargo check)                       # host target — shared, non-Windows code
-./scripts/check-windows.sh                          # Windows target — the real HWND/IPC/vibrancy code
+npm run build                                            # frontend: tsc + vite build
+find . -name '._*' -not -path '*/node_modules/*' -delete
+export CARGO_TARGET_DIR="$HOME/.cache/movideoplayer-target"
+(cd src-tauri && cargo check)                            # host target — shared, non-Windows code
+./scripts/check-windows.sh                                # Windows target — the real HWND/IPC/vibrancy code (sets the two lines above for you)
 ```
 
 `check-windows.sh` cross-checks the Windows-gated Rust (mpv named-pipe IPC,
