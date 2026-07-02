@@ -2,7 +2,7 @@ use serde_json::Value;
 use tauri::{Manager, State};
 
 use super::require_ipc;
-use crate::persistence::store::file_identity;
+use crate::persistence::store::resume_identity;
 use crate::persistence::ResumeEntry;
 use crate::state::AppState;
 
@@ -164,24 +164,20 @@ pub async fn mpv_load_file(
         *state.current_file.write().await = Some(path.clone());
         state.mpv.remember_file(&path).await;
 
-        let local_path = std::path::Path::new(&path);
-        if local_path.exists() {
-            let file_id = file_identity(local_path);
-            if let Some(entry) = state.persistence.resume_entry(&file_id).await {
-                let _ = client.set_property("time-pos", Value::from(entry.position_secs)).await;
-                if let Some(aid) = entry.audio_track_id {
-                    let _ = client.set_property("aid", Value::from(aid)).await;
-                }
-                if let Some(sid) = entry.sub_track_id {
-                    let _ = client.set_property("sid", Value::from(sid)).await;
-                }
-                let _ = client.set_property("speed", Value::from(entry.speed)).await;
-                // This was captured into every ResumeEntry by
-                // save_resume_state but never applied back — the one
-                // concrete bug behind "I set volume to 70, reopened, and
-                // it was back to 100."
-                let _ = client.set_property("volume", Value::from(entry.volume)).await;
+        // Previously gated on Path::exists(), which is always false for a
+        // stream URL — resume/volume restoration silently never ran for
+        // any network source as a result. resume_identity() handles both.
+        let file_id = resume_identity(&path);
+        if let Some(entry) = state.persistence.resume_entry(&file_id).await {
+            let _ = client.set_property("time-pos", Value::from(entry.position_secs)).await;
+            if let Some(aid) = entry.audio_track_id {
+                let _ = client.set_property("aid", Value::from(aid)).await;
             }
+            if let Some(sid) = entry.sub_track_id {
+                let _ = client.set_property("sid", Value::from(sid)).await;
+            }
+            let _ = client.set_property("speed", Value::from(entry.speed)).await;
+            let _ = client.set_property("volume", Value::from(entry.volume)).await;
         }
     }
     Ok(())
@@ -203,10 +199,6 @@ pub async fn save_resume_state(state: State<'_, AppState>) -> Result<(), String>
     let Some(path) = state.current_file.read().await.clone() else {
         return Ok(());
     };
-    let local_path = std::path::Path::new(&path);
-    if !local_path.exists() {
-        return Ok(());
-    }
     let client = require_ipc(&state).await?;
     let position_secs = client
         .get_property("time-pos")
@@ -249,7 +241,7 @@ pub async fn save_resume_state(state: State<'_, AppState>) -> Result<(), String>
     };
     state
         .persistence
-        .upsert_resume_entry(file_identity(local_path), entry)
+        .upsert_resume_entry(resume_identity(&path), entry)
         .await;
     state.persistence.save().await.map_err(|e| e.to_string())
 }

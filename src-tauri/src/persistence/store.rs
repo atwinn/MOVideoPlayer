@@ -63,7 +63,7 @@ impl PersistenceStore {
     }
 }
 
-/// Cheap file-identity hash for resume-entry keys: path + size + mtime, not
+/// Resume-entry identity for a local file: path + size + mtime, not
 /// full-content hashing, so it stays fast even for large video files.
 pub fn file_identity(path: &Path) -> String {
     let metadata = fs::metadata(path).ok();
@@ -79,4 +79,18 @@ pub fn file_identity(path: &Path) -> String {
     hasher.update(&size.to_le_bytes());
     hasher.update(&mtime.to_le_bytes());
     hasher.finalize().to_hex().to_string()
+}
+
+/// Resume-entry identity for whatever `mpv_load_file` was given — a local
+/// path OR a stream URL (http(s)/rtsp/rtmp/smb/...). Gating resume/volume
+/// persistence on `Path::exists()` meant it silently never activated for
+/// any network source, since a URL is never a real filesystem path. For
+/// URLs there's no size/mtime to hash, so the URL string itself is the
+/// identity — stable across app restarts as long as the URL doesn't change.
+pub fn resume_identity(path_or_url: &str) -> String {
+    if path_or_url.contains("://") {
+        blake3::hash(path_or_url.as_bytes()).to_hex().to_string()
+    } else {
+        file_identity(Path::new(path_or_url))
+    }
 }
