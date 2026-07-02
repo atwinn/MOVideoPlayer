@@ -134,6 +134,18 @@ pub async fn mpv_load_file(
     if let Some(lang) = settings.general.preferred_subtitle_language {
         let _ = client.set_property("slang", Value::String(lang)).await;
     }
+    // Baseline for a file with no resume history yet; overridden below if
+    // one exists. Without this, every fresh file plays at mpv's hardcoded
+    // default (volume 100, speed 1) regardless of what's configured in
+    // Settings > Playback.
+    let _ = client
+        .set_property("volume", Value::from(settings.playback.volume))
+        .await;
+    if settings.playback.remember_speed {
+        let _ = client
+            .set_property("speed", Value::from(settings.playback.default_speed))
+            .await;
+    }
 
     let mode = if append { "append-play" } else { "replace" };
     let result = client
@@ -164,6 +176,11 @@ pub async fn mpv_load_file(
                     let _ = client.set_property("sid", Value::from(sid)).await;
                 }
                 let _ = client.set_property("speed", Value::from(entry.speed)).await;
+                // This was captured into every ResumeEntry by
+                // save_resume_state but never applied back — the one
+                // concrete bug behind "I set volume to 70, reopened, and
+                // it was back to 100."
+                let _ = client.set_property("volume", Value::from(entry.volume)).await;
             }
         }
     }

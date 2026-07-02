@@ -25,16 +25,10 @@ export const mpvSetTrack = (kind: TrackKind, id: number) =>
   invoke<void>("mpv_set_track", { kind, id });
 export const mpvSetAspect = (mode: AspectMode) => invoke<void>("mpv_set_aspect", { mode });
 
-export const windowMinimize = () => invoke<void>("window_minimize");
-export const windowToggleMaximize = () => invoke<void>("window_toggle_maximize");
-export const windowClose = () => invoke<void>("window_close");
+// Minimize/maximize/close are handled by the native window chrome
+// (decorations:true) — only fullscreen still needs a command, since
+// there's no native control for that.
 export const windowToggleFullscreen = () => invoke<boolean>("window_toggle_fullscreen");
-export const setMaximizeButtonRect = (
-  left: number,
-  top: number,
-  right: number,
-  bottom: number,
-) => invoke<void>("set_maximize_button_rect", { left, top, right, bottom });
 
 export const openVideoDialog = () => invoke<string | null>("open_video_dialog");
 export const openSubtitleDialog = () => invoke<string | null>("open_subtitle_dialog");

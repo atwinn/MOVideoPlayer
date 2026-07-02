@@ -63,19 +63,6 @@ pub fn run() {
             app.manage(app_state);
 
             window::vibrancy::apply_glass_backdrop(&main_window, None);
-            // TEMPORARILY DISABLED: the custom WM_NCHITTEST subclass was
-            // meant to add edge-resize + Snap Layout hover support to this
-            // undecorated window, but real-hardware testing showed it
-            // breaks basic window dragging outright (data-tauri-drag-region
-            // + startDragging() work fine on the natively-decorated
-            // settings window, but freeze the main window solid — this
-            // subclass is the only thing that differs between the two).
-            // Re-enable once resize/hit-testing is reworked and confirmed
-            // not to interfere with normal drag.
-            // window::chrome::install(
-            //     &main_window,
-            //     Arc::clone(&app.state::<AppState>().maximize_rect),
-            // );
 
             // Restore last window geometry, then reveal the window (it
             // starts hidden to avoid a flash of unstyled/undecorated content
@@ -177,11 +164,7 @@ pub fn run() {
             tracks::mpv_list_tracks,
             tracks::mpv_set_track,
             tracks::mpv_set_aspect,
-            window_cmds::window_minimize,
-            window_cmds::window_toggle_maximize,
-            window_cmds::window_close,
             window_cmds::window_toggle_fullscreen,
-            window_cmds::set_maximize_button_rect,
             window_cmds::open_settings_window,
             files::open_video_dialog,
             files::open_subtitle_dialog,

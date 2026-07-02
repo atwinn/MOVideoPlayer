@@ -5,7 +5,6 @@ use tokio::sync::RwLock;
 
 use crate::mpv::MpvController;
 use crate::persistence::PersistenceStore;
-use crate::window::MaximizeButtonRect;
 
 /// Sentinel for "not yet known" in the HWND caches below — real HWNDs are
 /// never zero, so this is safe to use with plain atomics for lock-free
@@ -15,7 +14,6 @@ const NO_HWND: isize = 0;
 pub struct AppState {
     pub mpv: Arc<MpvController>,
     pub persistence: Arc<PersistenceStore>,
-    pub maximize_rect: Arc<MaximizeButtonRect>,
     pub main_hwnd: AtomicIsize,
     pub mpv_child_hwnd: AtomicIsize,
     pub current_file: RwLock<Option<String>>,
@@ -26,7 +24,6 @@ impl AppState {
         Self {
             mpv,
             persistence,
-            maximize_rect: Arc::new(MaximizeButtonRect::default()),
             main_hwnd: AtomicIsize::new(NO_HWND),
             mpv_child_hwnd: AtomicIsize::new(NO_HWND),
             current_file: RwLock::new(None),

@@ -1,10 +1,10 @@
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 import { DropZone } from "./components/dnd/DropZone";
 import { EmptyState } from "./components/overlay/EmptyState";
 import { OverlayLayer } from "./components/overlay/OverlayLayer";
-import { CustomTitlebar } from "./components/titlebar/CustomTitlebar";
 import { resolveAction } from "./lib/shortcuts/registry";
 import { runAction } from "./lib/shortcuts/actions";
 import { initMpvEventBridge } from "./lib/mpvEvents";
@@ -63,10 +63,17 @@ export default function App() {
     };
   }, []);
 
+  // Native window chrome (see tauri.conf.json decorations:true) means
+  // there's no custom titlebar to show the filename in — use the OS
+  // titlebar's own text instead.
+  useEffect(() => {
+    const name = filePath?.split(/[/\\]/).pop();
+    void getCurrentWindow().setTitle(name ? `${name} — MOVideoPlayer` : "MOVideoPlayer");
+  }, [filePath]);
+
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <DropZone />
-      <CustomTitlebar />
       {filePath ? <OverlayLayer /> : <EmptyState />}
       {lastError && (
         <div className="absolute bottom-4 left-1/2 z-30 flex max-w-md -translate-x-1/2 items-start gap-2 rounded-glass border border-glass-border bg-red-950/80 px-4 py-3 text-sm text-white shadow-2xl backdrop-blur-glass">
