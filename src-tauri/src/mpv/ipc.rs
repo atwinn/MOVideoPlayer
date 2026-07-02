@@ -16,12 +16,18 @@ use tokio::sync::{broadcast, oneshot, Mutex};
 
 use super::protocol::{MpvEvent, MpvRequest, MpvResponse};
 
+const COMMAND_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(15);
+
 #[derive(Debug)]
 pub enum IpcError {
     Io(std::io::Error),
     Mpv(String),
     Closed,
     Unsupported,
+    /// mpv accepted the request but never replied within
+    /// `COMMAND_TIMEOUT`. Previously this hung the caller forever with no
+    /// visible symptom other than "nothing happens" in the UI.
+    Timeout,
 }
 
 impl fmt::Display for IpcError {
@@ -31,6 +37,7 @@ impl fmt::Display for IpcError {
             IpcError::Mpv(msg) => write!(f, "mpv error: {msg}"),
             IpcError::Closed => write!(f, "mpv IPC channel closed"),
             IpcError::Unsupported => write!(f, "mpv IPC is only supported on Windows"),
+            IpcError::Timeout => write!(f, "mpv did not reply within {COMMAND_TIMEOUT:?}"),
         }
     }
 }
@@ -99,9 +106,19 @@ impl MpvIpcClient {
         let mut line = serde_json::to_vec(&request).map_err(|e| IpcError::Mpv(e.to_string()))?;
         line.push(b'\n');
 
+        tracing::debug!("mpv ipc -> {}", String::from_utf8_lossy(&line).trim_end());
         self.write_line(&line).await?;
 
-        let response = rx.await.map_err(|_| IpcError::Closed)?;
+        let response = match tokio::time::timeout(COMMAND_TIMEOUT, rx).await {
+            Ok(Ok(response)) => response,
+            Ok(Err(_)) => return Err(IpcError::Closed),
+            Err(_) => {
+                self.inner.pending.lock().await.remove(&request_id);
+                tracing::error!("mpv ipc command timed out (request_id={request_id})");
+                return Err(IpcError::Timeout);
+            }
+        };
+        tracing::debug!("mpv ipc <- (reply to {request_id}) error={} data={:?}", response.error, response.data);
         if response.error != "success" {
             return Err(IpcError::Mpv(response.error));
         }
@@ -198,7 +215,14 @@ mod windows_impl {
             loop {
                 match lines.next_line().await {
                     Ok(Some(line)) => handle_line(&client, &line),
-                    Ok(None) | Err(_) => break,
+                    Ok(None) => {
+                        tracing::warn!("mpv ipc read loop: pipe closed (EOF)");
+                        break;
+                    }
+                    Err(e) => {
+                        tracing::warn!("mpv ipc read loop: read error: {e}");
+                        break;
+                    }
                 }
             }
             // Pipe closed (mpv exited or crashed) — wake up anyone still
@@ -209,7 +233,9 @@ mod windows_impl {
     }
 
     fn handle_line(client: &Arc<MpvIpcClient>, line: &str) {
+        tracing::debug!("mpv ipc <- raw: {line}");
         let Ok(value) = serde_json::from_str::<serde_json::Value>(line) else {
+            tracing::warn!("mpv ipc: failed to parse line as JSON: {line}");
             return;
         };
 

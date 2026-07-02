@@ -83,6 +83,7 @@ impl MpvController {
         use tokio::process::Command;
 
         let pipe_name = format!(r"\\.\pipe\{}", self.pipe_id);
+        tracing::info!("spawning mpv: {} --wid={} --input-ipc-server={pipe_name}", self.mpv_binary.display(), self.hwnd);
         let child = Command::new(&self.mpv_binary)
             .arg(format!("--wid={}", self.hwnd))
             .arg(format!("--input-ipc-server={pipe_name}"))
@@ -97,6 +98,10 @@ impl MpvController {
             .arg("--osc=no")
             .arg("--osd-level=0")
             .arg("--config=no")
+            // TEMPORARY diagnostic verbosity — mpv's own stderr was
+            // otherwise completely silent, hiding driver/vo/decoder
+            // errors. Revert to quieter logging once loadfile is fixed.
+            .arg("--msg-level=all=v")
             .kill_on_drop(true)
             .spawn()
             .map_err(IpcError::Io)?;
