@@ -1,4 +1,4 @@
-import { AudioLines, Camera, Captions, Gauge, Maximize, Minimize, RectangleHorizontal, Settings } from "lucide-react";
+import { AudioLines, Camera, Captions, Gauge, ListVideo, Maximize, Minimize, RectangleHorizontal, Settings } from "lucide-react";
 
 import { mpvScreenshot, openSettingsWindow, windowToggleFullscreen } from "../../lib/tauriCommands";
 import { usePlayerStore } from "../../store/playerStore";
@@ -50,8 +50,12 @@ function ToolbarButton({
 export function Toolbar() {
   const isFullscreen = useUiStore((s) => s.isFullscreen);
   const setFullscreen = useUiStore((s) => s.setFullscreen);
+  const activePanel = useUiStore((s) => s.activePanel);
+  const setActivePanel = useUiStore((s) => s.setActivePanel);
   const volume = usePlayerStore((s) => s.volume);
   const muted = usePlayerStore((s) => s.muted);
+  const hasChapters = usePlayerStore((s) => s.chapters.length > 0);
+  const chaptersOpen = activePanel === "chapters";
 
   return (
     <div className="flex items-center gap-1 rounded-full border border-glass-border bg-glass-tint px-1.5 py-1.5 shadow-lg backdrop-blur-glass">
@@ -74,6 +78,21 @@ export function Toolbar() {
       <ToolbarButton icon={<RectangleHorizontal size={18} />} label="Aspect ratio" panel="aspect">
         <AspectRatioPanel />
       </ToolbarButton>
+      {hasChapters && (
+        // The actual chapter list renders as its own top-right overlay
+        // (ChapterPanel), not a dropdown here — this button just toggles
+        // that panel's visibility, since "press C" was the only way to
+        // discover it otherwise.
+        <button
+          type="button"
+          aria-label="Chapters"
+          title="Chapters"
+          onClick={() => setActivePanel(chaptersOpen ? null : "chapters")}
+          className={`${BUTTON_SIZE} ${chaptersOpen ? "bg-white/25" : "hover:bg-white/10"}`}
+        >
+          <ListVideo size={18} />
+        </button>
+      )}
       <button
         type="button"
         aria-label="Screenshot"

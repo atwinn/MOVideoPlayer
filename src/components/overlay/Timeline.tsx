@@ -59,10 +59,10 @@ export function Timeline() {
   const hoverFraction = hoverX !== null ? fractionAt(hoverX) : null;
 
   return (
-    <div className="flex flex-col gap-1 px-1">
+    <div className="flex flex-col gap-1.5 rounded-glass border border-glass-border bg-glass-tint px-3 py-2.5 shadow-lg backdrop-blur-glass">
       <div
         ref={trackRef}
-        className="relative h-2 w-full cursor-pointer rounded-full bg-black/45 shadow-[0_0_0_1px_rgba(0,0,0,0.3)]"
+        className="relative h-2 w-full cursor-pointer rounded-full bg-black/50 shadow-[0_0_0_1px_rgba(0,0,0,0.3)]"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -87,9 +87,14 @@ export function Timeline() {
             style={{ left: `${duration > 0 ? (chapter.time / duration) * 100 : 0}%` }}
           />
         ))}
+        {/* Always visible (not hover-gated) — a scrub handle that only
+            appears while the cursor happens to sit exactly on a 2px-tall
+            strip is invisible almost all the time during normal
+            unattended playback, which reads as "stuck" even though the
+            underlying position tracks correctly. */}
         <div
-          className={`absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.4),0_1px_4px_rgba(0,0,0,0.5)] transition-opacity ${
-            isHovering || isDragging ? "opacity-100" : "opacity-0"
+          className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.5),0_1px_4px_rgba(0,0,0,0.6)] transition-[width,height] ${
+            isHovering || isDragging ? "h-4 w-4" : "h-3 w-3"
           }`}
           style={{ left: `${playedFraction * 100}%` }}
         />
@@ -102,7 +107,7 @@ export function Timeline() {
           </div>
         )}
       </div>
-      <div className="flex justify-between text-xs tabular-nums text-white/80">
+      <div className="flex justify-between text-xs tabular-nums text-white/90">
         <span>{formatTime(displayTime)}</span>
         <span>{formatTime(duration)}</span>
       </div>

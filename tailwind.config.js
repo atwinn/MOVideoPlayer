@@ -5,8 +5,8 @@ export default {
     extend: {
       colors: {
         glass: {
-          tint: "rgba(16, 16, 20, 0.78)",
-          border: "rgba(255, 255, 255, 0.14)",
+          tint: "rgba(14, 14, 17, 0.9)",
+          border: "rgba(255, 255, 255, 0.16)",
         },
       },
       backdropBlur: {

@@ -120,6 +120,21 @@ pub async fn mpv_load_file(
 ) -> Result<(), String> {
     tracing::info!("mpv_load_file called: path={path:?} append={append}");
     let client = require_ipc(&state).await?;
+
+    // mpv's own alang/slang properties do real language-code matching
+    // (e.g. "jpn" preference correctly matches a track tagged "ja") and
+    // apply automatically whenever mpv picks a default track on load —
+    // simpler and more correct than us trying to match track-list "lang"
+    // strings ourselves after the fact. Settings previously did nothing
+    // with these preferences beyond persisting them.
+    let settings = state.persistence.snapshot().await;
+    if let Some(lang) = settings.general.preferred_audio_language {
+        let _ = client.set_property("alang", Value::String(lang)).await;
+    }
+    if let Some(lang) = settings.general.preferred_subtitle_language {
+        let _ = client.set_property("slang", Value::String(lang)).await;
+    }
+
     let mode = if append { "append-play" } else { "replace" };
     let result = client
         .command(vec![
