@@ -62,7 +62,7 @@ export function Timeline() {
     <div className="flex flex-col gap-1 px-1">
       <div
         ref={trackRef}
-        className="relative h-1.5 w-full cursor-pointer rounded-full bg-white/20"
+        className="relative h-2 w-full cursor-pointer rounded-full bg-black/45 shadow-[0_0_0_1px_rgba(0,0,0,0.3)]"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -73,22 +73,22 @@ export function Timeline() {
         }}
       >
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-white/35"
+          className="absolute inset-y-0 left-0 rounded-full bg-white/45"
           style={{ width: `${bufferedFraction * 100}%` }}
         />
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-white"
+          className="absolute inset-y-0 left-0 rounded-full bg-white shadow-[0_0_4px_rgba(0,0,0,0.6)]"
           style={{ width: `${playedFraction * 100}%` }}
         />
         {chapters.map((chapter, i) => (
           <div
             key={i}
-            className="absolute top-0 h-full w-px bg-black/50"
+            className="absolute top-0 h-full w-px bg-black/60"
             style={{ left: `${duration > 0 ? (chapter.time / duration) * 100 : 0}%` }}
           />
         ))}
         <div
-          className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow transition-opacity ${
+          className={`absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.4),0_1px_4px_rgba(0,0,0,0.5)] transition-opacity ${
             isHovering || isDragging ? "opacity-100" : "opacity-0"
           }`}
           style={{ left: `${playedFraction * 100}%` }}

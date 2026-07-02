@@ -1,16 +1,4 @@
-import {
-  AudioLines,
-  Camera,
-  Captions,
-  Gauge,
-  Maximize,
-  Minimize,
-  RectangleHorizontal,
-  Settings,
-  Volume1,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
+import { AudioLines, Camera, Captions, Gauge, Maximize, Minimize, RectangleHorizontal, Settings } from "lucide-react";
 
 import { mpvScreenshot, openSettingsWindow, windowToggleFullscreen } from "../../lib/tauriCommands";
 import { usePlayerStore } from "../../store/playerStore";
@@ -20,7 +8,7 @@ import { AspectRatioPanel } from "./panels/AspectRatioPanel";
 import { AudioTrackPanel } from "./panels/AudioTrackPanel";
 import { SpeedPanel } from "./panels/SpeedPanel";
 import { SubtitleTrackPanel } from "./panels/SubtitleTrackPanel";
-import { VolumePanel } from "./panels/VolumePanel";
+import { VolumeIcon, VolumePanel } from "./panels/VolumePanel";
 
 /// Every toolbar entry is the same fixed square regardless of whether it
 /// opens a panel or fires immediately — mixing pill-shaped and square
@@ -57,12 +45,6 @@ function ToolbarButton({
       <FloatingPanel open={open}>{children}</FloatingPanel>
     </div>
   );
-}
-
-function VolumeIcon({ volume, muted }: { volume: number; muted: boolean }) {
-  if (muted || volume === 0) return <VolumeX size={18} />;
-  if (volume < 50) return <Volume1 size={18} />;
-  return <Volume2 size={18} />;
 }
 
 export function Toolbar() {

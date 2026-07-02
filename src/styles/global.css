@@ -19,3 +19,13 @@ body,
 * {
   box-sizing: border-box;
 }
+
+/* WebView2 doesn't reliably honor `color-scheme: dark` for the native
+   <select> popup list, so it falls back to a plain white background with
+   default (near-black) text — unreadable until hovered, since nothing
+   else in the app uses a light background. Force it explicitly. */
+select,
+option {
+  background-color: #1a1a1e;
+  color: white;
+}
