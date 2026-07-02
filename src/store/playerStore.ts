@@ -1,5 +1,6 @@
 import { create } from "zustand";
 
+import { mpvGetProperty, mpvListTracks } from "../lib/tauriCommands";
 import type { TrackList } from "../lib/types";
 
 interface Chapter {
@@ -29,6 +30,14 @@ interface PlayerState {
   setTracks: (tracks: TrackList) => void;
   setMpvAlive: (alive: boolean) => void;
   setLastError: (message: string | null) => void;
+  /// Pulls current values directly from mpv rather than waiting on
+  /// property-change events. mpv fires its initial burst of events
+  /// (pause/volume/etc.) within milliseconds of the IPC connection —
+  /// faster than the frontend's event listener can reliably attach —
+  /// so relying on events alone left the UI stuck on hardcoded defaults
+  /// (e.g. the play button showing "paused" when mpv was actually
+  /// playing). Call after every successful load.
+  hydrateFromMpv: () => Promise<void>;
 }
 
 export const usePlayerStore = create<PlayerState>((set) => ({
@@ -86,4 +95,24 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   setTracks: (tracks) => set({ tracks }),
   setMpvAlive: (alive) => set({ mpvAlive: alive }),
   setLastError: (message) => set({ lastError: message }),
+
+  hydrateFromMpv: async () => {
+    const [paused, volume, muted, speed, duration, tracks] = await Promise.all([
+      mpvGetProperty<boolean>("pause").catch(() => undefined),
+      mpvGetProperty<number>("volume").catch(() => undefined),
+      mpvGetProperty<boolean>("mute").catch(() => undefined),
+      mpvGetProperty<number>("speed").catch(() => undefined),
+      mpvGetProperty<number>("duration").catch(() => undefined),
+      mpvListTracks().catch(() => undefined),
+    ]);
+    set((state) => ({
+      paused: paused ?? state.paused,
+      volume: volume ?? state.volume,
+      muted: muted ?? state.muted,
+      speed: speed ?? state.speed,
+      duration: duration ?? state.duration,
+      tracks: tracks ?? state.tracks,
+      mpvAlive: true,
+    }));
+  },
 }));

@@ -1,6 +1,7 @@
 use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 use crate::state::AppState;
+use crate::window::vibrancy;
 
 #[tauri::command]
 pub async fn window_minimize(window: WebviewWindow) -> Result<(), String> {
@@ -55,11 +56,13 @@ pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     if let Some(existing) = app.get_webview_window("settings") {
         return existing.set_focus().map_err(|e| e.to_string());
     }
-    WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("index.html".into()))
+    let window = WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("index.html".into()))
         .title("Settings")
         .inner_size(640.0, 480.0)
+        .min_inner_size(480.0, 360.0)
         .resizable(true)
         .build()
         .map_err(|e| e.to_string())?;
+    vibrancy::apply_glass_backdrop(&window, None);
     Ok(())
 }

@@ -8,6 +8,7 @@ export type ToolbarPanel =
   | "chapters"
   | "loop"
   | "info"
+  | "volume"
   | null;
 
 interface UiState {

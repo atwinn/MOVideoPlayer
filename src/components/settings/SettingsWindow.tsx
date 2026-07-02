@@ -1,3 +1,4 @@
+import { Monitor, Palette, SlidersHorizontal } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useSettingsStore } from "../../store/settingsStore";
@@ -6,9 +7,9 @@ import { InterfaceTab } from "./InterfaceTab";
 import { PlaybackTab } from "./PlaybackTab";
 
 const TABS = [
-  { id: "general", label: "General", Component: GeneralTab },
-  { id: "playback", label: "Playback", Component: PlaybackTab },
-  { id: "interface", label: "Interface", Component: InterfaceTab },
+  { id: "general", label: "General", icon: SlidersHorizontal, Component: GeneralTab },
+  { id: "playback", label: "Playback", icon: Monitor, Component: PlaybackTab },
+  { id: "interface", label: "Interface", icon: Palette, Component: InterfaceTab },
 ] as const;
 
 export function SettingsWindow() {
@@ -20,25 +21,35 @@ export function SettingsWindow() {
     void load();
   }, [load]);
 
-  const ActiveComponent = TABS.find((t) => t.id === activeTab)?.Component ?? GeneralTab;
+  const activeTabMeta = TABS.find((t) => t.id === activeTab) ?? TABS[0];
+  const ActiveComponent = activeTabMeta.Component;
 
   return (
-    <div className="flex h-screen w-screen bg-[#1a1a1e] text-white">
-      <nav className="flex w-40 flex-col gap-1 border-r border-white/10 p-3">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={`rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
-              activeTab === tab.id ? "bg-white/15" : "hover:bg-white/5"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="flex h-screen w-screen bg-glass-tint text-white">
+      <nav className="flex w-44 flex-col gap-1 border-r border-glass-border p-3">
+        <p className="px-2 pb-2 pt-1 text-xs font-medium uppercase tracking-wider text-white/40">
+          Settings
+        </p>
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                active ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <Icon size={16} />
+              {tab.label}
+            </button>
+          );
+        })}
       </nav>
-      <div className="flex-1 p-6">
+      <div className="flex-1 overflow-y-auto p-6">
+        <h1 className="mb-4 text-base font-semibold">{activeTabMeta.label}</h1>
         {loaded ? <ActiveComponent /> : <p className="text-sm text-white/50">Loading…</p>}
       </div>
     </div>

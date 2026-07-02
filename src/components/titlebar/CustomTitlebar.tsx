@@ -6,6 +6,10 @@ import { setMaximizeButtonRect, windowClose, windowMinimize, windowToggleMaximiz
 import { usePlayerStore } from "../../store/playerStore";
 import { useUiStore } from "../../store/uiStore";
 
+function basename(path: string): string {
+  return path.split(/[/\\]/).pop() || path;
+}
+
 /// Rendered once at the App root regardless of whether a video is
 /// loaded — without decorations:false's native chrome, this borderless
 /// window has NO way to close/minimize/move itself if this doesn't
@@ -21,6 +25,19 @@ export function CustomTitlebar() {
   const overlayVisible = useUiStore((s) => s.overlayVisible);
   const cleanMode = useUiStore((s) => s.cleanMode);
   const visible = !filePath || (overlayVisible && !cleanMode);
+
+  // `data-tauri-drag-region` alone wasn't reliably moving the window, so
+  // this drives it explicitly too — same mechanism the attribute uses
+  // under the hood, just not dependent on Tauri's injected listener
+  // timing/attachment order relative to React's own event handling.
+  const handleDragMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    if (e.detail === 2) {
+      void windowToggleMaximize();
+      return;
+    }
+    void getCurrentWindow().startDragging();
+  };
 
   useEffect(() => {
     const reportRect = () => {
@@ -52,20 +69,29 @@ export function CustomTitlebar() {
     };
   }, []);
 
+  const displayName = filePath ? basename(filePath) : "MOVideoPlayer";
+
   return (
     <div
       data-tauri-drag-region
+      onMouseDown={handleDragMouseDown}
       className={`absolute inset-x-0 top-0 z-20 flex h-9 w-full items-center justify-between px-2 text-white/90 transition-opacity duration-200 ${
         visible ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
     >
-      <span data-tauri-drag-region className="px-2 text-xs font-medium tracking-wide opacity-70">
-        MOVideoPlayer
+      <span
+        data-tauri-drag-region
+        onMouseDown={handleDragMouseDown}
+        className="truncate px-2 text-xs font-medium tracking-wide opacity-70"
+        title={filePath ?? undefined}
+      >
+        {displayName}
       </span>
       <div className="flex items-center gap-1">
         <button
           type="button"
           aria-label="Minimize"
+          title="Minimize"
           onClick={() => void windowMinimize()}
           className="flex h-7 w-9 items-center justify-center rounded-md hover:bg-white/10"
         >
@@ -75,6 +101,7 @@ export function CustomTitlebar() {
           ref={maximizeRef}
           type="button"
           aria-label="Maximize"
+          title="Maximize"
           onClick={() => void windowToggleMaximize()}
           className="flex h-7 w-9 items-center justify-center rounded-md hover:bg-white/10"
         >
@@ -83,6 +110,7 @@ export function CustomTitlebar() {
         <button
           type="button"
           aria-label="Close"
+          title="Close"
           onClick={() => void windowClose()}
           className="flex h-7 w-9 items-center justify-center rounded-md hover:bg-red-500/80"
         >

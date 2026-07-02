@@ -23,6 +23,8 @@ export function Timeline() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragPreview, setDragPreview] = useState<number | null>(null);
   const [hoverX, setHoverX] = useState<number | null>(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const isDragging = dragPreview !== null;
 
   const fractionAt = useCallback((clientX: number) => {
     const track = trackRef.current;
@@ -38,7 +40,7 @@ export function Timeline() {
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     setHoverX(e.clientX);
-    if (dragPreview !== null) {
+    if (isDragging) {
       setDragPreview(fractionAt(e.clientX) * duration);
     }
   };
@@ -60,11 +62,15 @@ export function Timeline() {
     <div className="flex flex-col gap-1 px-1">
       <div
         ref={trackRef}
-        className="group relative h-1.5 w-full cursor-pointer rounded-full bg-white/20"
+        className="relative h-1.5 w-full cursor-pointer rounded-full bg-white/20"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerLeave={() => setHoverX(null)}
+        onPointerEnter={() => setIsHovering(true)}
+        onPointerLeave={() => {
+          setHoverX(null);
+          setIsHovering(false);
+        }}
       >
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-white/35"
@@ -82,7 +88,9 @@ export function Timeline() {
           />
         ))}
         <div
-          className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white opacity-0 shadow transition-opacity group-hover:opacity-100"
+          className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow transition-opacity ${
+            isHovering || isDragging ? "opacity-100" : "opacity-0"
+          }`}
           style={{ left: `${playedFraction * 100}%` }}
         />
         {hoverFraction !== null && (

@@ -21,7 +21,7 @@ export function OverlayLayer() {
 
   return (
     <div
-      className="absolute inset-0 flex flex-col justify-end"
+      className="absolute inset-0"
       onMouseMove={showOverlay}
       onClick={(e) => {
         if (e.target === e.currentTarget) toggleOverlay();
@@ -29,10 +29,17 @@ export function OverlayLayer() {
     >
       {!cleanMode && <ChapterPanel />}
 
+      {/* Spec: five floating buttons centered in the video area — not
+          stacked directly above the timeline. */}
       <div
-        className={`flex flex-col items-center gap-4 pb-8 transition-opacity duration-200 ${visibilityClass}`}
+        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-200 ${visibilityClass}`}
       >
         <CenterTransport />
+      </div>
+
+      <div
+        className={`absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 pb-8 transition-opacity duration-200 ${visibilityClass}`}
+      >
         <div className="flex w-full max-w-3xl flex-col gap-3 px-6">
           <Timeline />
           <div className="flex justify-center">

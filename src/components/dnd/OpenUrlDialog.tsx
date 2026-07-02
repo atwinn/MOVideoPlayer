@@ -8,6 +8,7 @@ export function OpenUrlDialog({ open, onClose }: { open: boolean; onClose: () =>
   const [url, setUrl] = useState("");
   const setFilePath = usePlayerStore((s) => s.setFilePath);
   const setLastError = usePlayerStore((s) => s.setLastError);
+  const hydrateFromMpv = usePlayerStore((s) => s.hydrateFromMpv);
 
   const submit = async () => {
     const trimmed = url.trim();
@@ -15,6 +16,7 @@ export function OpenUrlDialog({ open, onClose }: { open: boolean; onClose: () =>
     try {
       await mpvLoadFile(trimmed, false);
       setFilePath(trimmed);
+      void hydrateFromMpv();
       setUrl("");
       onClose();
     } catch (err) {

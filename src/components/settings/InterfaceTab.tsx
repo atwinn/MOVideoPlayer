@@ -5,8 +5,8 @@ export function InterfaceTab() {
   const update = useSettingsStore((s) => s.update);
 
   return (
-    <div className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
+    <div className="flex flex-col gap-5">
+      <label className="flex flex-col gap-1.5 text-sm">
         Overlay auto-hide delay (ms)
         <input
           type="number"
@@ -25,7 +25,7 @@ export function InterfaceTab() {
           className="w-28 rounded-lg bg-white/10 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-white/40"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1.5 text-sm">
         Theme
         <select
           value={settings.interface.theme}

@@ -9,6 +9,7 @@ export function EmptyState() {
   const [urlDialogOpen, setUrlDialogOpen] = useState(false);
   const setFilePath = usePlayerStore((s) => s.setFilePath);
   const setLastError = usePlayerStore((s) => s.setLastError);
+  const hydrateFromMpv = usePlayerStore((s) => s.hydrateFromMpv);
 
   const openFile = async () => {
     const path = await openVideoDialog();
@@ -16,6 +17,7 @@ export function EmptyState() {
     try {
       await mpvLoadFile(path, false);
       setFilePath(path);
+      void hydrateFromMpv();
     } catch (err) {
       // A rejected invoke() here previously failed completely silently —
       // the UI just never switched away from this screen with no

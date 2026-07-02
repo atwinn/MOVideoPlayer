@@ -42,6 +42,7 @@ export function ChapterPanel() {
               onClick={() => setActivePanel(null)}
               className="text-white/60 hover:text-white"
               aria-label="Close chapters"
+              title="Close"
             >
               ✕
             </button>

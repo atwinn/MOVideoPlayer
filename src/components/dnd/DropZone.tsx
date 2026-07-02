@@ -18,6 +18,7 @@ export function DropZone() {
   const [isDragging, setIsDragging] = useState(false);
   const setFilePath = usePlayerStore((s) => s.setFilePath);
   const setLastError = usePlayerStore((s) => s.setLastError);
+  const hydrateFromMpv = usePlayerStore((s) => s.hydrateFromMpv);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -36,7 +37,10 @@ export function DropZone() {
 
           if (videoPath) {
             mpvLoadFile(videoPath, false)
-              .then(() => setFilePath(videoPath))
+              .then(() => {
+                setFilePath(videoPath);
+                void hydrateFromMpv();
+              })
               .catch((err) => setLastError(`Couldn't open "${videoPath}": ${String(err)}`));
           }
           for (const subtitlePath of subtitlePaths) {
@@ -51,7 +55,7 @@ export function DropZone() {
       });
 
     return () => unlisten?.();
-  }, [setFilePath, setLastError]);
+  }, [setFilePath, setLastError, hydrateFromMpv]);
 
   if (!isDragging) return null;
 

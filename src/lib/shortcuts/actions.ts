@@ -1,6 +1,7 @@
 import { usePlayerStore } from "../../store/playerStore";
 import { useUiStore } from "../../store/uiStore";
 import {
+  mpvPlay,
   mpvSeek,
   mpvSetVolume,
   mpvToggleMute,
@@ -10,6 +11,23 @@ import {
 import type { ActionId } from "./registry";
 
 const VOLUME_STEP = 5;
+
+/// Shared by the center-transport play button, the spacebar shortcut, and
+/// anywhere else play/pause is triggered. Handles two UX gaps that were
+/// otherwise easy to hit: mpv's --keep-open=yes pauses at end-of-file
+/// without rewinding (so "play" after the video ends did nothing visible
+/// without an explicit seek-to-0 first), and a still-open audio/subtitle
+/// panel doesn't auto-hide on its own once playback resumes.
+export async function togglePlayOrReplay() {
+  const { eofReached, paused } = usePlayerStore.getState();
+  if (eofReached && paused) {
+    await mpvSeek(0, false);
+    await mpvPlay();
+  } else {
+    await mpvTogglePlay();
+  }
+  useUiStore.getState().setActivePanel(null);
+}
 
 function jumpToChapterIndex(index: number) {
   const chapters = usePlayerStore.getState().chapters;
@@ -30,7 +48,7 @@ function stepChapter(direction: 1 | -1) {
 }
 
 const handlers: Record<ActionId, () => void> = {
-  togglePlay: () => void mpvTogglePlay(),
+  togglePlay: () => void togglePlayOrReplay(),
   seekBack5: () => void mpvSeek(-5, true),
   seekFwd5: () => void mpvSeek(5, true),
   seekBack10: () => void mpvSeek(-10, true),

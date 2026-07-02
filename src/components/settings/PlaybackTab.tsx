@@ -5,7 +5,7 @@ export function PlaybackTab() {
   const update = useSettingsStore((s) => s.update);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <label className="flex items-center justify-between text-sm">
         Remember last playback speed
         <input
@@ -18,7 +18,7 @@ export function PlaybackTab() {
           }
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1.5 text-sm">
         Default playback speed
         <input
           type="number"
@@ -37,7 +37,7 @@ export function PlaybackTab() {
           className="w-24 rounded-lg bg-white/10 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-white/40"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1.5 text-sm">
         Default volume
         <input
           type="range"
