@@ -35,7 +35,15 @@ pub async fn mpv_toggle_play(state: State<'_, AppState>) -> Result<(), String> {
 #[tauri::command]
 pub async fn mpv_seek(state: State<'_, AppState>, seconds: f64, relative: bool) -> Result<(), String> {
     let client = require_ipc(&state).await?;
-    let mode = if relative { "relative" } else { "absolute" };
+    // "+keyframes" (imprecise, nearest-keyframe) rather than mpv's default
+    // exact/hr-seek: frame-accurate seeking requires random-accessing an
+    // arbitrary byte offset and decoding forward from there, which needs
+    // solid HTTP Range support from the server. Debrid/torrent-proxy
+    // stream sources often handle that poorly for not-yet-buffered
+    // content — seeking appeared to land correctly, then mpv fell back
+    // and the position reverted to ~0 a second or two later. Keyframe
+    // seeking is the standard, more robust choice for network sources.
+    let mode = if relative { "relative+keyframes" } else { "absolute+keyframes" };
     client
         .command(vec![
             Value::String("seek".into()),
