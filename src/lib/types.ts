@@ -15,6 +15,21 @@ export interface TrackList {
 
 export type AspectMode = "auto" | "sixteen9" | "four3" | "twenty-one9" | "stretch";
 
+export interface VideoInfo {
+  filename: string | null;
+  container: string | null;
+  video_codec: string | null;
+  width: number | null;
+  height: number | null;
+  fps: number | null;
+  video_bitrate: number | null;
+  hwdec: string | null;
+  audio_codec: string | null;
+  audio_channels: number | null;
+  audio_samplerate: number | null;
+  audio_bitrate: number | null;
+}
+
 export interface ResumeEntry {
   file_path: string;
   position_secs: number;

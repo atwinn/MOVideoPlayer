@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { AppSettings, AspectMode, TrackKind, TrackList } from "./types";
+import type { AppSettings, AspectMode, TrackKind, TrackList, VideoInfo } from "./types";
 
 export const mpvPlay = () => invoke<void>("mpv_play");
 export const mpvPause = () => invoke<void>("mpv_pause");
@@ -23,6 +23,9 @@ export const mpvListTracks = () => invoke<TrackList>("mpv_list_tracks");
 export const mpvSetTrack = (kind: TrackKind, id: number) =>
   invoke<void>("mpv_set_track", { kind, id });
 export const mpvSetAspect = (mode: AspectMode) => invoke<void>("mpv_set_aspect", { mode });
+export const mpvVideoInfo = () => invoke<VideoInfo>("mpv_video_info");
+export const mpvSetVideoFilter = (label: string, filter: string, enabled: boolean) =>
+  invoke<void>("mpv_set_video_filter", { label, filter, enabled });
 
 // Minimize/maximize/close are handled by the native window chrome
 // (decorations:true) — only fullscreen still needs a command, since

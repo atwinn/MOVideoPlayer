@@ -1,4 +1,17 @@
-import { AudioLines, Captions, Gauge, ListVideo, Maximize, Minimize, RectangleHorizontal, Settings } from "lucide-react";
+import {
+  AudioLines,
+  Captions,
+  Gauge,
+  Info,
+  ListVideo,
+  Maximize,
+  Minimize,
+  RectangleHorizontal,
+  Repeat,
+  Settings,
+  Sliders,
+  Wand2,
+} from "lucide-react";
 
 import { openSettingsWindow, windowToggleFullscreen } from "../../lib/tauriCommands";
 import { usePlayerStore } from "../../store/playerStore";
@@ -6,8 +19,12 @@ import { useUiStore, type ToolbarPanel } from "../../store/uiStore";
 import { FloatingPanel } from "./FloatingPanel";
 import { AspectRatioPanel } from "./panels/AspectRatioPanel";
 import { AudioTrackPanel } from "./panels/AudioTrackPanel";
+import { ColorPanel } from "./panels/ColorPanel";
+import { LoopPanel } from "./panels/LoopPanel";
 import { SpeedPanel } from "./panels/SpeedPanel";
 import { SubtitleTrackPanel } from "./panels/SubtitleTrackPanel";
+import { TransformPanel } from "./panels/TransformPanel";
+import { VideoInfoPanel } from "./panels/VideoInfoPanel";
 import { VolumeIcon, VolumePanel } from "./panels/VolumePanel";
 
 /// Every toolbar entry is the same fixed square regardless of whether it
@@ -77,6 +94,18 @@ export function Toolbar() {
       </ToolbarButton>
       <ToolbarButton icon={<RectangleHorizontal size={18} />} label="Aspect ratio" panel="aspect">
         <AspectRatioPanel />
+      </ToolbarButton>
+      <ToolbarButton icon={<Sliders size={18} />} label="Color" panel="color">
+        <ColorPanel />
+      </ToolbarButton>
+      <ToolbarButton icon={<Wand2 size={18} />} label="Rotate / flip" panel="transform">
+        <TransformPanel />
+      </ToolbarButton>
+      <ToolbarButton icon={<Repeat size={18} />} label="Loop A-B" panel="loop">
+        <LoopPanel />
+      </ToolbarButton>
+      <ToolbarButton icon={<Info size={18} />} label="Video info" panel="info">
+        <VideoInfoPanel />
       </ToolbarButton>
       {hasChapters && (
         // The actual chapter list renders as its own top-right overlay

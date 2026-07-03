@@ -64,4 +64,12 @@ pub const OBSERVED_PROPERTIES: &[&str] = &[
     "chapter-list",
     "eof-reached",
     "demuxer-cache-time",
+    "brightness",
+    "contrast",
+    "saturation",
+    "gamma",
+    "hue",
+    "video-rotate",
+    "ab-loop-a",
+    "ab-loop-b",
 ];

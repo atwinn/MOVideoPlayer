@@ -9,6 +9,8 @@ export type ToolbarPanel =
   | "loop"
   | "info"
   | "volume"
+  | "color"
+  | "transform"
   | null;
 
 interface UiState {

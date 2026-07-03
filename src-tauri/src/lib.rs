@@ -199,6 +199,8 @@ pub fn run() {
             tracks::mpv_list_tracks,
             tracks::mpv_set_track,
             tracks::mpv_set_aspect,
+            tracks::mpv_video_info,
+            tracks::mpv_set_video_filter,
             window_cmds::window_toggle_fullscreen,
             window_cmds::open_settings_window,
             files::open_video_dialog,
