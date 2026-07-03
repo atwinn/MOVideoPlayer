@@ -133,6 +133,23 @@ pub fn run() {
                     }
                     tracing::info!("mpv started and IPC connected");
 
+                    // Windows passes a double-clicked/"Open with"-launched
+                    // file's path as argv[1] (argv[0] is the exe itself).
+                    // Without this, registering the file association
+                    // (tauri.conf.json's bundle.fileAssociations) only gets
+                    // the app to *launch* — the file itself was silently
+                    // dropped on the floor.
+                    let launch_arg = std::env::args().nth(1);
+                    if let Some(path) = launch_arg {
+                        tracing::info!("opening file from launch argument: {path}");
+                        let state = app_handle.state::<AppState>();
+                        if let Err(e) = playback::mpv_load_file(state, path.clone(), false).await {
+                            tracing::error!("failed to open launch-argument file: {e}");
+                        } else {
+                            let _ = app_handle.emit("app://file-opened", &path);
+                        }
+                    }
+
                     let mut events = mpv_controller.subscribe();
                     loop {
                         match events.recv().await {

@@ -1,3 +1,4 @@
+import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
@@ -23,7 +24,9 @@ function isTypingIntoInput(target: EventTarget | null): boolean {
 export default function App() {
   const filePath = usePlayerStore((s) => s.filePath);
   const lastError = usePlayerStore((s) => s.lastError);
+  const setFilePath = usePlayerStore((s) => s.setFilePath);
   const setLastError = usePlayerStore((s) => s.setLastError);
+  const hydrateFromMpv = usePlayerStore((s) => s.hydrateFromMpv);
   const loadSettings = useSettingsStore((s) => s.load);
   const setHideTimeoutMs = useUiStore((s) => s.setHideTimeoutMs);
 
@@ -33,6 +36,21 @@ export default function App() {
       void unlistenPromise.then((unlisten) => unlisten());
     };
   }, []);
+
+  // A file opened via "Open with" / double-click is loaded entirely on the
+  // Rust side (argv[1] at launch, before any webview code has run) — this
+  // just mirrors what DropZone/EmptyState do after their own mpvLoadFile
+  // calls, so the UI actually switches off the empty state instead of
+  // sitting there while mpv plays the file underneath it unseen.
+  useEffect(() => {
+    const unlistenPromise = listen<string>("app://file-opened", (event) => {
+      setFilePath(event.payload);
+      void hydrateFromMpv();
+    });
+    return () => {
+      void unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, [setFilePath, hydrateFromMpv]);
 
   useEffect(() => {
     void loadSettings().then(() => {

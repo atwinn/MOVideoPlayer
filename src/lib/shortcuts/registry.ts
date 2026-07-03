@@ -15,6 +15,7 @@ export type ActionId =
   | "openChapterList"
   | "openLoopManager"
   | "openVideoInfo"
+  | "rotateVideo"
   | "prevChapter"
   | "nextChapter"
   | `jumpToChapter${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}`;
@@ -45,6 +46,7 @@ export const defaultBindings: ShortcutBinding[] = [
   { keys: "C", action: "openChapterList" },
   { keys: "L", action: "openLoopManager" },
   { keys: "I", action: "openVideoInfo" },
+  { keys: "R", action: "rotateVideo" },
   ...([1, 2, 3, 4, 5, 6, 7, 8, 9] as const).map((n) => ({
     keys: String(n),
     action: `jumpToChapter${n}` as ActionId,

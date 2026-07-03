@@ -1,8 +1,9 @@
 import { usePlayerStore } from "../../store/playerStore";
-import { useUiStore } from "../../store/uiStore";
+import { useUiStore, type ToolbarPanel } from "../../store/uiStore";
 import {
   mpvPlay,
   mpvSeek,
+  mpvSetProperty,
   mpvSetVolume,
   mpvToggleMute,
   mpvTogglePlay,
@@ -33,6 +34,16 @@ function jumpToChapterIndex(index: number) {
   const chapters = usePlayerStore.getState().chapters;
   const target = chapters[index];
   if (target) void mpvSeek(target.time, false);
+}
+
+/// Every keyboard shortcut that opens a toolbar dropdown previously just
+/// called setActivePanel(panel) unconditionally — pressing the same key
+/// twice re-set it to the same value instead of closing it, unlike the
+/// matching toolbar button (which explicitly toggles). This makes the
+/// keyboard behave the same way.
+function togglePanel(panel: ToolbarPanel) {
+  const ui = useUiStore.getState();
+  ui.setActivePanel(ui.activePanel === panel ? null : panel);
 }
 
 function stepChapter(direction: 1 | -1) {
@@ -75,11 +86,15 @@ const handlers: Record<ActionId, () => void> = {
   },
   toggleCleanMode: () => useUiStore.getState().toggleCleanMode(),
   toggleMute: () => void mpvToggleMute(),
-  cycleSubtitleMenu: () => useUiStore.getState().setActivePanel("subtitle"),
-  cycleAudioMenu: () => useUiStore.getState().setActivePanel("audio"),
-  openChapterList: () => useUiStore.getState().setActivePanel("chapters"),
-  openLoopManager: () => useUiStore.getState().setActivePanel("loop"),
-  openVideoInfo: () => useUiStore.getState().setActivePanel("info"),
+  cycleSubtitleMenu: () => togglePanel("subtitle"),
+  cycleAudioMenu: () => togglePanel("audio"),
+  openChapterList: () => togglePanel("chapters"),
+  openLoopManager: () => togglePanel("loop"),
+  openVideoInfo: () => togglePanel("info"),
+  rotateVideo: () => {
+    const next = (usePlayerStore.getState().videoRotate + 90) % 360;
+    void mpvSetProperty("video-rotate", next);
+  },
   prevChapter: () => stepChapter(-1),
   nextChapter: () => stepChapter(1),
   jumpToChapter1: () => jumpToChapterIndex(0),

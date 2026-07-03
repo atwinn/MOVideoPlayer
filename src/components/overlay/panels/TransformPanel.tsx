@@ -32,7 +32,12 @@ export function TransformPanel() {
           onClick={() => {
             const next = !hflip;
             setHflip(next);
-            void mpvSetVideoFilter("moviehflip", "hflip", next);
+            // mpv's own filter name for a left-right flip is "mirror" —
+            // "hflip" is the ffmpeg/lavfi name and isn't a valid mpv vf
+            // filter on its own, so the vf-add command failed silently
+            // (no .catch() surfaced it) and the button just toggled
+            // color with no actual effect on the video.
+            void mpvSetVideoFilter("moviehflip", "mirror", next).catch(() => setHflip(!next));
           }}
           className={`${BUTTON} ${hflip ? "bg-white text-black" : "bg-white/10 hover:bg-white/20"}`}
         >
@@ -44,7 +49,9 @@ export function TransformPanel() {
           onClick={() => {
             const next = !vflip;
             setVflip(next);
-            void mpvSetVideoFilter("movievflip", "vflip", next);
+            // Same issue as above — mpv's native name for a top-bottom
+            // flip is "flip", not ffmpeg's "vflip".
+            void mpvSetVideoFilter("movievflip", "flip", next).catch(() => setVflip(!next));
           }}
           className={`${BUTTON} ${vflip ? "bg-white text-black" : "bg-white/10 hover:bg-white/20"}`}
         >

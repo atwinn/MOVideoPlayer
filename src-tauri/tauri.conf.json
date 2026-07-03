@@ -37,6 +37,14 @@
     "resources": ["resources/mpv/*"],
     "windows": {
       "webviewInstallMode": { "type": "embedBootstrapper" }
-    }
+    },
+    "fileAssociations": [
+      {
+        "ext": ["mp4", "mkv", "avi", "mov", "webm", "m4v", "flv", "wmv", "ts", "m2ts", "3gp", "mpg", "mpeg", "ogv"],
+        "name": "Video",
+        "description": "Video file",
+        "role": "Viewer"
+      }
+    ]
   }
 }
