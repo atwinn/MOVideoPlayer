@@ -6,7 +6,7 @@ import { AlertTriangle, X } from "lucide-react";
 import { DropZone } from "./components/dnd/DropZone";
 import { EmptyState } from "./components/overlay/EmptyState";
 import { OverlayLayer } from "./components/overlay/OverlayLayer";
-import { resolveAction } from "./lib/shortcuts/registry";
+import { resolveAction, setBindings, type ShortcutBinding } from "./lib/shortcuts/registry";
 import { runAction } from "./lib/shortcuts/actions";
 import { initMpvEventBridge } from "./lib/mpvEvents";
 import { saveResumeState } from "./lib/tauriCommands";
@@ -54,7 +54,13 @@ export default function App() {
 
   useEffect(() => {
     void loadSettings().then(() => {
-      setHideTimeoutMs(useSettingsStore.getState().settings.interface.overlay_hide_timeout_ms);
+      const settings = useSettingsStore.getState().settings;
+      setHideTimeoutMs(settings.interface.overlay_hide_timeout_ms);
+      // Empty means "never customized" — keep registry.ts's hardcoded
+      // defaults rather than overwriting them with nothing.
+      if (settings.shortcuts.length > 0) {
+        setBindings(settings.shortcuts as ShortcutBinding[]);
+      }
     });
   }, [loadSettings, setHideTimeoutMs]);
 

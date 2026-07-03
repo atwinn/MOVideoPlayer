@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   interface: { overlay_hide_timeout_ms: 500, theme: "system" },
   window: { width: 1280, height: 800, x: null, y: null },
   resume: {},
+  shortcuts: [],
 };
 
 interface SettingsState {

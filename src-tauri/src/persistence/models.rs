@@ -68,6 +68,15 @@ impl Default for InterfaceSettings {
     }
 }
 
+/// Mirrors src/lib/shortcuts/registry.ts's ShortcutBinding — `action` is
+/// an opaque string on this side (the frontend owns the ActionId union
+/// and validates it), we just persist and round-trip it.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShortcutBinding {
+    pub keys: String,
+    pub action: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct WindowGeometry {
     pub width: f64,
@@ -85,6 +94,12 @@ pub struct AppSettings {
     pub window: WindowGeometry,
     /// Keyed by `blake3(path + size + mtime)` — see `persistence::store::file_identity`.
     pub resume: HashMap<String, ResumeEntry>,
+    /// Empty means "use the frontend's hardcoded defaults" (registry.ts's
+    /// defaultBindings) — only populated once the user customizes a key.
+    /// `#[serde(default)]` so settings.json files saved before this field
+    /// existed still deserialize instead of failing to load entirely.
+    #[serde(default)]
+    pub shortcuts: Vec<ShortcutBinding>,
 }
 
 impl Default for AppSettings {
@@ -101,6 +116,7 @@ impl Default for AppSettings {
                 y: None,
             },
             resume: HashMap::new(),
+            shortcuts: Vec::new(),
         }
     }
 }

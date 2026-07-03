@@ -64,6 +64,11 @@ export interface WindowGeometry {
   y: number | null;
 }
 
+export interface PersistedShortcutBinding {
+  keys: string;
+  action: string;
+}
+
 export interface AppSettings {
   schema_version: number;
   general: GeneralSettings;
@@ -71,6 +76,7 @@ export interface AppSettings {
   interface: InterfaceSettings;
   window: WindowGeometry;
   resume: Record<string, ResumeEntry>;
+  shortcuts: PersistedShortcutBinding[];
 }
 
 export type MpvEvent =
