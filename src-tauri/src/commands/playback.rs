@@ -82,7 +82,14 @@ pub async fn mpv_set_speed(state: State<'_, AppState>, speed: f64) -> Result<(),
 pub async fn mpv_set_volume(state: State<'_, AppState>, volume: f64) -> Result<(), String> {
     let client = require_ipc(&state).await?;
     client.set_property("volume", Value::from(volume)).await?;
-    Ok(())
+    // Volume is a global, app-wide preference (like most players), not
+    // per-file — persist immediately so every subsequently opened file
+    // starts at this level instead of reverting to whatever a per-file
+    // resume entry (or mpv's default) says.
+    let mut settings = state.persistence.snapshot().await;
+    settings.playback.volume = volume;
+    state.persistence.replace(settings).await;
+    state.persistence.save().await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -173,8 +180,14 @@ pub async fn mpv_load_file(
         state.mpv.remember_file(&path).await;
 
         // Previously gated on Path::exists(), which is always false for a
-        // stream URL — resume/volume restoration silently never ran for
-        // any network source as a result. resume_identity() handles both.
+        // stream URL — resume restoration silently never ran for any
+        // network source as a result. resume_identity() handles both.
+        //
+        // Volume is intentionally NOT restored per-file here — it's a
+        // global app-wide preference (set above from settings.playback.volume
+        // and kept in sync by mpv_set_volume), not something that should
+        // flip back and forth between files based on whatever it happened
+        // to be the last time each specific file was played.
         let file_id = resume_identity(&path);
         if let Some(entry) = state.persistence.resume_entry(&file_id).await {
             let _ = client.set_property("time-pos", Value::from(entry.position_secs)).await;
@@ -185,7 +198,6 @@ pub async fn mpv_load_file(
                 let _ = client.set_property("sid", Value::from(sid)).await;
             }
             let _ = client.set_property("speed", Value::from(entry.speed)).await;
-            let _ = client.set_property("volume", Value::from(entry.volume)).await;
         }
     }
     Ok(())
@@ -214,12 +226,6 @@ pub async fn save_resume_state(state: State<'_, AppState>) -> Result<(), String>
         .ok()
         .and_then(|v| v.as_f64())
         .unwrap_or(0.0);
-    let volume = client
-        .get_property("volume")
-        .await
-        .ok()
-        .and_then(|v| v.as_f64())
-        .unwrap_or(100.0);
     let speed = client
         .get_property("speed")
         .await
@@ -242,7 +248,6 @@ pub async fn save_resume_state(state: State<'_, AppState>) -> Result<(), String>
         position_secs,
         audio_track_id,
         sub_track_id,
-        volume,
         zoom: 1.0,
         speed,
         last_played_at: recency_token(),

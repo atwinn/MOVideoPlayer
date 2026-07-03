@@ -82,7 +82,7 @@ pub fn file_identity(path: &Path) -> String {
 }
 
 /// Resume-entry identity for whatever `mpv_load_file` was given — a local
-/// path OR a stream URL (http(s)/rtsp/rtmp/smb/...). Gating resume/volume
+/// path OR a stream URL (http(s)/rtsp/rtmp/smb/...). Gating resume
 /// persistence on `Path::exists()` meant it silently never activated for
 /// any network source, since a URL is never a real filesystem path. For
 /// URLs there's no size/mtime to hash, so the URL string itself is the

@@ -20,7 +20,6 @@ export interface ResumeEntry {
   position_secs: number;
   audio_track_id: number | null;
   sub_track_id: number | null;
-  volume: number;
   zoom: number;
   speed: number;
   last_played_at: string;

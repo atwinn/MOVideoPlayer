@@ -11,7 +11,6 @@ pub struct ResumeEntry {
     pub position_secs: f64,
     pub audio_track_id: Option<i64>,
     pub sub_track_id: Option<i64>,
-    pub volume: f64,
     pub zoom: f64,
     pub speed: f64,
     /// Opaque, lexicographically-sortable recency token (zero-padded epoch
