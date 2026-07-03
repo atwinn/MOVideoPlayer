@@ -85,8 +85,42 @@ pub fn run() {
                 });
             }
 
-            // Spawn mpv, embed its video window, and forward every mpv/
-            // controller event to the frontend for the lifetime of the app.
+            // Race to embed mpv's video window the moment its OS process
+            // exists, in parallel with (not after) start()'s IPC handshake
+            // below. mpv's own window can appear, at whatever default
+            // size/position it happens to pick, well before the IPC pipe
+            // connects and every observe_property round-trip completes —
+            // waiting for all of that first left a window where mpv's
+            // unsized video surface could overlap the native titlebar and
+            // swallow the clicks that would otherwise start a window drag,
+            // right after every app launch.
+            {
+                let app_handle = app.handle().clone();
+                let mpv_controller = Arc::clone(&mpv_controller);
+                tauri::async_runtime::spawn(async move {
+                    let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(10);
+                    loop {
+                        if let Some(pid) = mpv_controller.early_pid() {
+                            let state = app_handle.state::<AppState>();
+                            let main_hwnd = state.main_hwnd.load(std::sync::atomic::Ordering::Relaxed);
+                            if let Some(child_hwnd) = window::embed::try_embed_once(main_hwnd, pid) {
+                                tracing::info!("mpv child hwnd embedded (early race): {child_hwnd}");
+                                state.set_mpv_child_hwnd(child_hwnd);
+                                return;
+                            }
+                        }
+                        if tokio::time::Instant::now() >= deadline {
+                            // Not fatal — the per-event retry below keeps
+                            // trying for the rest of the session.
+                            return;
+                        }
+                        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+                    }
+                });
+            }
+
+            // Spawn mpv and forward every mpv/controller event to the
+            // frontend for the lifetime of the app.
             {
                 let app_handle = app.handle().clone();
                 let mpv_controller = Arc::clone(&mpv_controller);
@@ -98,22 +132,6 @@ pub fn run() {
                         return;
                     }
                     tracing::info!("mpv started and IPC connected");
-
-                    match mpv_controller.pid().await {
-                        Some(pid) => {
-                            tracing::info!("mpv pid: {pid}, embedding window...");
-                            let state = app_handle.state::<AppState>();
-                            let main_hwnd = state.main_hwnd.load(std::sync::atomic::Ordering::Relaxed);
-                            match window::embed::embed_and_resize(main_hwnd, pid) {
-                                Ok(child_hwnd) => {
-                                    tracing::info!("mpv child hwnd embedded: {child_hwnd}");
-                                    state.set_mpv_child_hwnd(child_hwnd);
-                                }
-                                Err(e) => tracing::warn!("mpv window embed failed: {e}"),
-                            }
-                        }
-                        None => tracing::warn!("mpv started but pid() returned None (unexpected)"),
-                    }
 
                     let mut events = mpv_controller.subscribe();
                     loop {

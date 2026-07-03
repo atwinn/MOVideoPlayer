@@ -29,14 +29,6 @@ pub fn main_hwnd(window: &WebviewWindow) -> Result<isize, EmbedError> {
     win::main_hwnd(window)
 }
 
-/// Locates mpv's video child window among `parent`'s children by matching
-/// process id, then pins it to `parent`'s full client rect at the bottom of
-/// the Z-order. Returns the child HWND on success so callers can cache it
-/// for subsequent resyncs without re-enumerating.
-pub fn embed_and_resize(parent: isize, mpv_pid: u32) -> Result<isize, EmbedError> {
-    win::embed_and_resize(parent, mpv_pid)
-}
-
 /// Single, non-blocking attempt to locate and embed mpv's child window — no
 /// internal poll/sleep loop. Meant to be called repeatedly from a caller
 /// that already has its own retry cadence (e.g. once per incoming mpv
@@ -59,7 +51,6 @@ mod win {
     use super::EmbedError;
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};
     use std::ffi::c_void;
-    use std::time::{Duration, Instant};
     use windows::core::BOOL;
     use windows::Win32::Foundation::{HWND, LPARAM, RECT};
     use windows::Win32::UI::WindowsAndMessaging::{
@@ -92,35 +83,6 @@ mod win {
             return BOOL(0);
         }
         BOOL(1)
-    }
-
-    /// mpv's window may not exist yet the instant the process spawns; poll
-    /// briefly rather than failing on the first miss.
-    pub fn embed_and_resize(parent: isize, mpv_pid: u32) -> Result<isize, EmbedError> {
-        let deadline = Instant::now() + Duration::from_secs(5);
-        loop {
-            let mut ctx = FindByPid {
-                pid: mpv_pid,
-                found: None,
-            };
-            unsafe {
-                let _ = EnumChildWindows(
-                    Some(HWND(parent as *mut c_void)),
-                    Some(enum_proc),
-                    LPARAM(&mut ctx as *mut _ as isize),
-                );
-            }
-            if let Some(child) = ctx.found {
-                resync(parent, child)?;
-                return Ok(child);
-            }
-            if Instant::now() >= deadline {
-                return Err(EmbedError(
-                    "timed out waiting for mpv's embedded window".into(),
-                ));
-            }
-            std::thread::sleep(Duration::from_millis(50));
-        }
     }
 
     pub fn try_embed_once(parent: isize, mpv_pid: u32) -> Option<isize> {
@@ -165,10 +127,6 @@ mod win {
     use super::EmbedError;
 
     pub fn main_hwnd(_window: &tauri::WebviewWindow) -> Result<isize, EmbedError> {
-        Err(EmbedError("window embedding is only supported on Windows".into()))
-    }
-
-    pub fn embed_and_resize(_parent: isize, _mpv_pid: u32) -> Result<isize, EmbedError> {
         Err(EmbedError("window embedding is only supported on Windows".into()))
     }
 

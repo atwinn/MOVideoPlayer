@@ -3,6 +3,7 @@
 //! controlled exclusively over the named-pipe JSON IPC client in `ipc.rs`.
 
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 
 use tokio::sync::{broadcast, RwLock};
@@ -44,6 +45,15 @@ pub struct MpvController {
     controller_tx: broadcast::Sender<ControllerEvent>,
     last_file: RwLock<Option<String>>,
     last_position: RwLock<f64>,
+    // Set the instant the OS process spawns — before the IPC pipe connects
+    // or any observe_property round-trip completes. `pid()` (via the
+    // Session, behind the RwLock) isn't available until all of that
+    // finishes, which was too late for embedding: mpv's own window can
+    // exist (at whatever default size/position it picks) well before then,
+    // briefly overlapping the native titlebar and swallowing the clicks
+    // that would otherwise start a window drag. This lets the embed race
+    // start the moment the process exists instead of waiting on IPC.
+    early_pid: AtomicU32,
 }
 
 impl MpvController {
@@ -57,7 +67,19 @@ impl MpvController {
             controller_tx,
             last_file: RwLock::new(None),
             last_position: RwLock::new(0.0),
+            early_pid: AtomicU32::new(0),
         })
+    }
+
+    /// The spawned mpv process's pid, available immediately on spawn —
+    /// well before `pid()` (which waits on the full session/IPC setup).
+    /// `0` is used as the "not yet known" sentinel since a real Windows
+    /// pid is never 0.
+    pub fn early_pid(&self) -> Option<u32> {
+        match self.early_pid.load(Ordering::Relaxed) {
+            0 => None,
+            pid => Some(pid),
+        }
     }
 
     pub fn subscribe(&self) -> broadcast::Receiver<ControllerEvent> {
@@ -113,6 +135,7 @@ impl MpvController {
             .map_err(IpcError::Io)?;
 
         let pid = child.id();
+        self.early_pid.store(pid.unwrap_or(0), Ordering::Relaxed);
         let ipc = MpvIpcClient::connect(&pipe_name).await?;
         for (id, name) in OBSERVED_PROPERTIES.iter().enumerate() {
             ipc.observe_property(id as u64, name).await?;
