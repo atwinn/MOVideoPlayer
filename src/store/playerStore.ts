@@ -8,6 +8,14 @@ interface Chapter {
   time: number;
 }
 
+/// mpv's loop-file property is "no" (off), "inf" (loop forever), or a
+/// remaining-repeat count — normalize all of that down to a simple on/off.
+function isLoopFileActive(data: unknown): boolean {
+  if (data === "inf") return true;
+  if (typeof data === "number") return data !== 0;
+  return false;
+}
+
 interface PlayerState {
   filePath: string | null;
   timePos: number;
@@ -31,13 +39,9 @@ interface PlayerState {
   /// point isn't set — normalized to `null` here.
   abLoopA: number | null;
   abLoopB: number | null;
-  /// Tracked app-side rather than read from mpv: flip only exists as a
-  /// labeled vf filter with no boolean property to observe, so this is the
-  /// source of truth for what the toggle buttons should show. Resets to
-  /// false on app restart even if a prior session left mpv's global filter
-  /// state flipped — an accepted gap for a quick view-only toggle.
-  hflip: boolean;
-  vflip: boolean;
+  /// Whole-file repeat (mpv's loop-file property: "no"/"inf"/a count) —
+  /// distinct from the AB-loop region above.
+  loopFile: boolean;
   /// Surfaced from Rust so a failed mpv startup/load is visible instead
   /// of silent — see EmptyState.tsx and lib/mpvEvents.ts.
   lastError: string | null;
@@ -47,8 +51,6 @@ interface PlayerState {
   setTracks: (tracks: TrackList) => void;
   setMpvAlive: (alive: boolean) => void;
   setLastError: (message: string | null) => void;
-  setHflip: (value: boolean) => void;
-  setVflip: (value: boolean) => void;
   /// Pulls current values directly from mpv rather than waiting on
   /// property-change events. mpv fires its initial burst of events
   /// (pause/volume/etc.) within milliseconds of the IPC connection —
@@ -81,8 +83,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   videoRotate: 0,
   abLoopA: null,
   abLoopB: null,
-  hflip: false,
-  vflip: false,
+  loopFile: false,
 
   setFilePath: (path) => set({ filePath: path }),
 
@@ -123,6 +124,8 @@ export const usePlayerStore = create<PlayerState>((set) => ({
           return { abLoopA: typeof data === "number" ? data : null };
         case "ab-loop-b":
           return { abLoopB: typeof data === "number" ? data : null };
+        case "loop-file":
+          return { loopFile: isLoopFileActive(data) };
         case "chapter-list":
           return {
             chapters: Array.isArray(data)
@@ -140,8 +143,6 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   setTracks: (tracks) => set({ tracks }),
   setMpvAlive: (alive) => set({ mpvAlive: alive }),
   setLastError: (message) => set({ lastError: message }),
-  setHflip: (value) => set({ hflip: value }),
-  setVflip: (value) => set({ vflip: value }),
 
   hydrateFromMpv: async () => {
     const asNumber = (v: unknown) => (typeof v === "number" ? v : undefined);
@@ -160,6 +161,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       videoRotate,
       abLoopA,
       abLoopB,
+      loopFile,
     ] = await Promise.all([
       mpvGetProperty<boolean>("pause").catch(() => undefined),
       mpvGetProperty<number>("volume").catch(() => undefined),
@@ -175,6 +177,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       mpvGetProperty<number>("video-rotate").catch(() => undefined),
       mpvGetProperty<unknown>("ab-loop-a").then(asNumber).catch(() => undefined),
       mpvGetProperty<unknown>("ab-loop-b").then(asNumber).catch(() => undefined),
+      mpvGetProperty<unknown>("loop-file").then(isLoopFileActive).catch(() => undefined),
     ]);
     set((state) => ({
       paused: paused ?? state.paused,
@@ -191,6 +194,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       videoRotate: videoRotate ?? state.videoRotate,
       abLoopA: abLoopA ?? null,
       abLoopB: abLoopB ?? null,
+      loopFile: loopFile ?? state.loopFile,
       mpvAlive: true,
     }));
   },

@@ -8,12 +8,12 @@ import {
   Minimize,
   RectangleHorizontal,
   Repeat,
+  Repeat1,
+  RotateCw,
   Settings,
   Sliders,
-  Wand2,
 } from "lucide-react";
-
-import { openSettingsWindow, windowToggleFullscreen } from "../../lib/tauriCommands";
+import { mpvSetProperty, openSettingsWindow, windowToggleFullscreen } from "../../lib/tauriCommands";
 import { usePlayerStore } from "../../store/playerStore";
 import { useUiStore, type ToolbarPanel } from "../../store/uiStore";
 import { FloatingPanel } from "./FloatingPanel";
@@ -21,9 +21,9 @@ import { AspectRatioPanel } from "./panels/AspectRatioPanel";
 import { AudioTrackPanel } from "./panels/AudioTrackPanel";
 import { ColorPanel } from "./panels/ColorPanel";
 import { LoopPanel } from "./panels/LoopPanel";
+import { RotatePanel } from "./panels/RotatePanel";
 import { SpeedPanel } from "./panels/SpeedPanel";
 import { SubtitleTrackPanel } from "./panels/SubtitleTrackPanel";
-import { TransformPanel } from "./panels/TransformPanel";
 import { VideoInfoPanel } from "./panels/VideoInfoPanel";
 import { VolumeIcon, VolumePanel } from "./panels/VolumePanel";
 
@@ -72,6 +72,7 @@ export function Toolbar() {
   const volume = usePlayerStore((s) => s.volume);
   const muted = usePlayerStore((s) => s.muted);
   const hasChapters = usePlayerStore((s) => s.chapters.length > 0);
+  const loopFile = usePlayerStore((s) => s.loopFile);
   const chaptersOpen = activePanel === "chapters";
 
   return (
@@ -98,12 +99,21 @@ export function Toolbar() {
       <ToolbarButton icon={<Sliders size={18} />} label="Color" panel="color">
         <ColorPanel />
       </ToolbarButton>
-      <ToolbarButton icon={<Wand2 size={18} />} label="Rotate / flip" panel="transform">
-        <TransformPanel />
+      <ToolbarButton icon={<RotateCw size={18} />} label="Rotate" panel="rotate">
+        <RotatePanel />
       </ToolbarButton>
       <ToolbarButton icon={<Repeat size={18} />} label="Loop A-B" panel="loop">
         <LoopPanel />
       </ToolbarButton>
+      <button
+        type="button"
+        aria-label="Loop video"
+        title="Loop video"
+        onClick={() => void mpvSetProperty("loop-file", loopFile ? "no" : "inf")}
+        className={`${BUTTON_SIZE} ${loopFile ? "bg-white/25" : "hover:bg-white/10"}`}
+      >
+        <Repeat1 size={18} />
+      </button>
       <ToolbarButton icon={<Info size={18} />} label="Video info" panel="info">
         <VideoInfoPanel />
       </ToolbarButton>

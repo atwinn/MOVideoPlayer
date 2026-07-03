@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import { useUiStore } from "../../store/uiStore";
 import { CenterTransport } from "./CenterTransport";
 import { ChapterPanel } from "./ChapterPanel";
@@ -13,11 +15,32 @@ export function OverlayLayer() {
   const cleanMode = useUiStore((s) => s.cleanMode);
   const showOverlay = useUiStore((s) => s.showOverlay);
   const toggleOverlay = useUiStore((s) => s.toggleOverlay);
+  const activePanel = useUiStore((s) => s.activePanel);
+  const setActivePanel = useUiStore((s) => s.setActivePanel);
+  const panelAreaRef = useRef<HTMLDivElement>(null);
 
   const controlsVisible = overlayVisible && !cleanMode;
   const visibilityClass = controlsVisible
     ? "opacity-100"
     : "pointer-events-none opacity-0";
+
+  // A toolbar dropdown (Volume/Speed/.../Chapters) previously only closed
+  // by clicking its own toggle button again — clicking anywhere else (the
+  // video, the timeline, empty space) left it stuck open. panelAreaRef
+  // wraps both the ChapterPanel and the Timeline/Toolbar row (the only two
+  // places activePanel-driven content renders) so a click inside either
+  // one — e.g. picking a chapter, or a slider inside a dropdown — doesn't
+  // count as "outside" and isn't mistaken for a dismiss.
+  useEffect(() => {
+    if (activePanel === null) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (panelAreaRef.current && !panelAreaRef.current.contains(e.target as Node)) {
+        setActivePanel(null);
+      }
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [activePanel, setActivePanel]);
 
   return (
     <div
@@ -27,7 +50,20 @@ export function OverlayLayer() {
         if (e.target === e.currentTarget) toggleOverlay();
       }}
     >
-      {!cleanMode && <ChapterPanel />}
+      <div ref={panelAreaRef}>
+        {!cleanMode && <ChapterPanel />}
+
+        <div
+          className={`absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 pb-8 transition-opacity duration-200 ${visibilityClass}`}
+        >
+          <div className="flex w-full max-w-3xl flex-col gap-3 px-6">
+            <Timeline />
+            <div className="flex justify-center">
+              <Toolbar />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Spec: five floating buttons centered in the video area — not
           stacked directly above the timeline. */}
@@ -35,17 +71,6 @@ export function OverlayLayer() {
         className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-200 ${visibilityClass}`}
       >
         <CenterTransport />
-      </div>
-
-      <div
-        className={`absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 pb-8 transition-opacity duration-200 ${visibilityClass}`}
-      >
-        <div className="flex w-full max-w-3xl flex-col gap-3 px-6">
-          <Timeline />
-          <div className="flex justify-center">
-            <Toolbar />
-          </div>
-        </div>
       </div>
     </div>
   );

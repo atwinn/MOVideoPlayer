@@ -10,7 +10,7 @@ export type ToolbarPanel =
   | "info"
   | "volume"
   | "color"
-  | "transform"
+  | "rotate"
   | null;
 
 interface UiState {

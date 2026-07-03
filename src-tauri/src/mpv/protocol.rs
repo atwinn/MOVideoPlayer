@@ -72,4 +72,5 @@ pub const OBSERVED_PROPERTIES: &[&str] = &[
     "video-rotate",
     "ab-loop-a",
     "ab-loop-b",
+    "loop-file",
 ];
