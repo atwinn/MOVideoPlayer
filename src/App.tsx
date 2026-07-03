@@ -46,6 +46,12 @@ export default function App() {
       const action = resolveAction(e);
       if (action) {
         e.preventDefault();
+        // Overlay visibility was only ever driven by mouse movement, so a
+        // keyboard-only seek (arrow keys etc.) with the mouse sitting
+        // still left the timeline/toolbar invisible for the entire
+        // action — the seek happened but there was nothing on screen to
+        // show where it landed.
+        useUiStore.getState().showOverlay();
         runAction(action);
       }
     };

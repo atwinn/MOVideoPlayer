@@ -14,7 +14,6 @@ export const mpvGetProperty = <T = unknown>(name: string) =>
 export const mpvSetSpeed = (speed: number) => invoke<void>("mpv_set_speed", { speed });
 export const mpvSetVolume = (volume: number) => invoke<void>("mpv_set_volume", { volume });
 export const mpvToggleMute = () => invoke<void>("mpv_toggle_mute");
-export const mpvScreenshot = () => invoke<string>("mpv_screenshot");
 export const mpvLoadFile = (path: string, append = false) =>
   invoke<void>("mpv_load_file", { path, append });
 export const mpvLoadSubtitle = (path: string) => invoke<void>("mpv_load_subtitle", { path });

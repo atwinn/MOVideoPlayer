@@ -175,7 +175,6 @@ pub fn run() {
             playback::mpv_set_speed,
             playback::mpv_set_volume,
             playback::mpv_toggle_mute,
-            playback::mpv_screenshot,
             playback::mpv_load_file,
             playback::mpv_load_subtitle,
             playback::save_resume_state,

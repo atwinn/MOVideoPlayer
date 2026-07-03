@@ -1,6 +1,6 @@
-import { AudioLines, Camera, Captions, Gauge, ListVideo, Maximize, Minimize, RectangleHorizontal, Settings } from "lucide-react";
+import { AudioLines, Captions, Gauge, ListVideo, Maximize, Minimize, RectangleHorizontal, Settings } from "lucide-react";
 
-import { mpvScreenshot, openSettingsWindow, windowToggleFullscreen } from "../../lib/tauriCommands";
+import { openSettingsWindow, windowToggleFullscreen } from "../../lib/tauriCommands";
 import { usePlayerStore } from "../../store/playerStore";
 import { useUiStore, type ToolbarPanel } from "../../store/uiStore";
 import { FloatingPanel } from "./FloatingPanel";
@@ -93,15 +93,6 @@ export function Toolbar() {
           <ListVideo size={18} />
         </button>
       )}
-      <button
-        type="button"
-        aria-label="Screenshot"
-        title="Screenshot"
-        onClick={() => void mpvScreenshot()}
-        className={`${BUTTON_SIZE} hover:bg-white/10`}
-      >
-        <Camera size={18} />
-      </button>
       <button
         type="button"
         aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}

@@ -1,5 +1,5 @@
 use serde_json::Value;
-use tauri::{Manager, State};
+use tauri::State;
 
 use super::require_ipc;
 use crate::persistence::store::resume_identity;
@@ -35,15 +35,14 @@ pub async fn mpv_toggle_play(state: State<'_, AppState>) -> Result<(), String> {
 #[tauri::command]
 pub async fn mpv_seek(state: State<'_, AppState>, seconds: f64, relative: bool) -> Result<(), String> {
     let client = require_ipc(&state).await?;
-    // "+keyframes" (imprecise, nearest-keyframe) rather than mpv's default
-    // exact/hr-seek: frame-accurate seeking requires random-accessing an
-    // arbitrary byte offset and decoding forward from there, which needs
-    // solid HTTP Range support from the server. Debrid/torrent-proxy
-    // stream sources often handle that poorly for not-yet-buffered
-    // content — seeking appeared to land correctly, then mpv fell back
-    // and the position reverted to ~0 a second or two later. Keyframe
-    // seeking is the standard, more robust choice for network sources.
-    let mode = if relative { "relative+keyframes" } else { "absolute+keyframes" };
+    // Exact (hr-seek) rather than "+keyframes": keyframe seeking snaps to
+    // the nearest keyframe instead of the requested position, which is
+    // exactly why it was reverted — it made every seek land visibly off
+    // by a small amount. This was originally added to fix a "seek then
+    // reverts to 0" bug, but that bug's real cause (mpv's own id-0
+    // property-change events being silently dropped, never reaching the
+    // frontend) was unrelated to seek precision — see protocol.rs.
+    let mode = if relative { "relative" } else { "absolute" };
     client
         .command(vec![
             Value::String("seek".into()),
@@ -102,29 +101,6 @@ pub async fn mpv_toggle_mute(state: State<'_, AppState>) -> Result<(), String> {
         .unwrap_or(false);
     client.set_property("mute", Value::Bool(!muted)).await?;
     Ok(())
-}
-
-#[tauri::command]
-pub async fn mpv_screenshot(
-    app: tauri::AppHandle,
-    state: State<'_, AppState>,
-) -> Result<String, String> {
-    let client = require_ipc(&state).await?;
-    let dir = app
-        .path()
-        .app_data_dir()
-        .map(|d| d.join("Screenshots"))
-        .map_err(|e| e.to_string())?;
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let filename = format!("movideoplayer-{}.png", uuid::Uuid::new_v4());
-    let path = dir.join(filename);
-    client
-        .command(vec![
-            Value::String("screenshot-to-file".into()),
-            Value::String(path.to_string_lossy().into_owned()),
-        ])
-        .await?;
-    Ok(path.to_string_lossy().into_owned())
 }
 
 #[tauri::command]
