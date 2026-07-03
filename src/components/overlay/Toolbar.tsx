@@ -11,6 +11,7 @@ import {
   Repeat,
   Repeat1,
   RotateCw,
+  Search,
   Settings,
   Sliders,
   Timer,
@@ -27,6 +28,7 @@ import { ColorPanel } from "./panels/ColorPanel";
 import { LoopPanel } from "./panels/LoopPanel";
 import { RotatePanel } from "./panels/RotatePanel";
 import { SpeedPanel } from "./panels/SpeedPanel";
+import { SubtitleSearchPanel } from "./panels/SubtitleSearchPanel";
 import { SubtitleStylePanel } from "./panels/SubtitleStylePanel";
 import { SubtitleTrackPanel } from "./panels/SubtitleTrackPanel";
 import { SyncPanel } from "./panels/SyncPanel";
@@ -100,6 +102,9 @@ export function Toolbar() {
       </ToolbarButton>
       <ToolbarButton icon={<Palette size={18} />} label="Subtitle style" panel="substyle">
         <SubtitleStylePanel />
+      </ToolbarButton>
+      <ToolbarButton icon={<Search size={18} />} label="Search subtitles online" panel="subsearch">
+        <SubtitleSearchPanel />
       </ToolbarButton>
       <ToolbarButton icon={<AudioLines size={18} />} label="Audio track" panel="audio">
         <AudioTrackPanel />

@@ -1,6 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { AppSettings, AspectMode, TrackKind, TrackList, VideoInfo } from "./types";
+import type {
+  AppSettings,
+  AspectMode,
+  SubtitleProvider,
+  SubtitleSearchResult,
+  TrackKind,
+  TrackList,
+  VideoInfo,
+} from "./types";
 
 export const mpvPlay = () => invoke<void>("mpv_play");
 export const mpvPause = () => invoke<void>("mpv_pause");
@@ -37,3 +45,10 @@ export const getSettings = () => invoke<AppSettings>("get_settings");
 export const setSettings = (settings: AppSettings) =>
   invoke<void>("set_settings", { settings });
 export const openSettingsWindow = () => invoke<void>("open_settings_window");
+
+export const testSubtitleProviderKey = (provider: SubtitleProvider, apiKey: string) =>
+  invoke<string>("test_subtitle_provider_key", { provider, apiKey });
+export const searchSubtitles = (query: string) =>
+  invoke<SubtitleSearchResult[]>("search_subtitles", { query });
+export const downloadSubtitle = (result: SubtitleSearchResult) =>
+  invoke<string>("download_subtitle", { result });

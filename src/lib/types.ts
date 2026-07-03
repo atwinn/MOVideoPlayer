@@ -69,6 +69,12 @@ export interface PersistedShortcutBinding {
   action: string;
 }
 
+export interface SubtitleProviderSettings {
+  opensubtitles_api_key: string | null;
+  subdl_api_key: string | null;
+  subsource_api_key: string | null;
+}
+
 export interface AppSettings {
   schema_version: number;
   general: GeneralSettings;
@@ -77,6 +83,17 @@ export interface AppSettings {
   window: WindowGeometry;
   resume: Record<string, ResumeEntry>;
   shortcuts: PersistedShortcutBinding[];
+  subtitle_providers: SubtitleProviderSettings;
+}
+
+export type SubtitleProvider = "opensubtitles" | "subdl" | "subsource";
+
+export interface SubtitleSearchResult {
+  provider: SubtitleProvider;
+  language: string;
+  release_name: string;
+  download_url: string | null;
+  file_id: string | null;
 }
 
 export type MpvEvent =

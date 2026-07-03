@@ -15,6 +15,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   window: { width: 1280, height: 800, x: null, y: null },
   resume: {},
   shortcuts: [],
+  subtitle_providers: {
+    opensubtitles_api_key: null,
+    subdl_api_key: null,
+    subsource_api_key: null,
+  },
 };
 
 interface SettingsState {

@@ -1,9 +1,10 @@
-import { Keyboard, Monitor, Palette, SlidersHorizontal } from "lucide-react";
+import { Captions, Keyboard, Monitor, Palette, SlidersHorizontal } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useSettingsStore } from "../../store/settingsStore";
 import { GeneralTab } from "./GeneralTab";
 import { InterfaceTab } from "./InterfaceTab";
+import { OnlineSubsTab } from "./OnlineSubsTab";
 import { PlaybackTab } from "./PlaybackTab";
 import { ShortcutsTab } from "./ShortcutsTab";
 
@@ -12,6 +13,7 @@ const TABS = [
   { id: "playback", label: "Playback", icon: Monitor, Component: PlaybackTab },
   { id: "interface", label: "Interface", icon: Palette, Component: InterfaceTab },
   { id: "shortcuts", label: "Shortcuts", icon: Keyboard, Component: ShortcutsTab },
+  { id: "subtitles", label: "Online Subtitles", icon: Captions, Component: OnlineSubsTab },
 ] as const;
 
 export function SettingsWindow() {

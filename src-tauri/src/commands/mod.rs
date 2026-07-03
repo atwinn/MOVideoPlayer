@@ -1,6 +1,7 @@
 pub mod files;
 pub mod playback;
 pub mod settings_cmds;
+pub mod subtitles;
 pub mod tracks;
 pub mod window_cmds;
 

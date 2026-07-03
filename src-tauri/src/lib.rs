@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use tauri::{Emitter, Manager};
 
-use commands::{files, playback, settings_cmds, tracks, window_cmds};
+use commands::{files, playback, settings_cmds, subtitles, tracks, window_cmds};
 use mpv::{ControllerEvent, MpvController};
 use persistence::PersistenceStore;
 use state::AppState;
@@ -223,6 +223,9 @@ pub fn run() {
             files::open_subtitle_dialog,
             settings_cmds::get_settings,
             settings_cmds::set_settings,
+            subtitles::test_subtitle_provider_key,
+            subtitles::search_subtitles,
+            subtitles::download_subtitle,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

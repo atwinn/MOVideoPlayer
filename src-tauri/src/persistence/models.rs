@@ -78,6 +78,13 @@ pub struct ShortcutBinding {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SubtitleProviderSettings {
+    pub opensubtitles_api_key: Option<String>,
+    pub subdl_api_key: Option<String>,
+    pub subsource_api_key: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct WindowGeometry {
     pub width: f64,
     pub height: f64,
@@ -100,6 +107,8 @@ pub struct AppSettings {
     /// existed still deserialize instead of failing to load entirely.
     #[serde(default)]
     pub shortcuts: Vec<ShortcutBinding>,
+    #[serde(default)]
+    pub subtitle_providers: SubtitleProviderSettings,
 }
 
 impl Default for AppSettings {
@@ -117,6 +126,7 @@ impl Default for AppSettings {
             },
             resume: HashMap::new(),
             shortcuts: Vec::new(),
+            subtitle_providers: SubtitleProviderSettings::default(),
         }
     }
 }

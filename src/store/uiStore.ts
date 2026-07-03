@@ -14,6 +14,7 @@ export type ToolbarPanel =
   | "substyle"
   | "sync"
   | "zoompan"
+  | "subsearch"
   | null;
 
 interface UiState {
