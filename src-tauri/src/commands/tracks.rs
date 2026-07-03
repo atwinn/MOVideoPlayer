@@ -169,6 +169,21 @@ pub async fn mpv_set_aspect(state: State<'_, AppState>, mode: AspectMode) -> Res
 /// operations are `set`/`add`/`toggle`/`del`/`clr`) — so every attempt to
 /// turn a flip back off silently errored. Manipulating the property
 /// directly sidesteps that whole string-operation vocabulary.
+///
+/// A follow-up report (with an IPC trace) showed the property update
+/// itself succeeding — mpv accepted the filter, and reading `vf` back
+/// confirmed `"enabled": true` — yet the video never visibly flipped.
+/// `video-rotate` (a VO-level property, not a filter) was confirmed
+/// working in the same report. That combination points at mpv's classic
+/// hwdec limitation: `mirror`/`flip` are plain software pixel filters,
+/// but frames decoded via `--hwdec=auto-safe` stay as opaque hardware
+/// surfaces (e.g. D3D11 textures) that a software filter can't operate
+/// on directly — mpv can hold the filter in the chain without erroring
+/// while it has no visible effect on hardware-decoded frames. Forcing
+/// software decoding while any flip is active sidesteps that; the
+/// alternative (finding a hwdec-compatible flip mechanism) isn't
+/// something to guess at blind without a way to verify it actually
+/// renders differently.
 #[tauri::command]
 pub async fn mpv_set_video_filter(
     state: State<'_, AppState>,
@@ -183,6 +198,13 @@ pub async fn mpv_set_video_filter(
     if enabled {
         list.push(serde_json::json!({ "name": filter, "label": label }));
     }
+    let any_filter_active = !list.is_empty();
     client.set_property("vf", Value::Array(list)).await?;
+    client
+        .set_property(
+            "hwdec",
+            Value::String(if any_filter_active { "no" } else { "auto-safe" }.into()),
+        )
+        .await?;
     Ok(())
 }
