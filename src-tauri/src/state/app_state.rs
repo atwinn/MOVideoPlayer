@@ -38,6 +38,10 @@ impl AppState {
         self.mpv_child_hwnd.store(hwnd, Ordering::Relaxed);
     }
 
+    pub fn mpv_child_hwnd(&self) -> isize {
+        self.mpv_child_hwnd.load(Ordering::Relaxed)
+    }
+
     /// Re-pins mpv's embedded child window to the main window's current
     /// client rect. No-op until both HWNDs are known (mpv may still be
     /// starting) or on non-Windows platforms.

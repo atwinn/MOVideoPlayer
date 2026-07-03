@@ -37,6 +37,17 @@ pub fn embed_and_resize(parent: isize, mpv_pid: u32) -> Result<isize, EmbedError
     win::embed_and_resize(parent, mpv_pid)
 }
 
+/// Single, non-blocking attempt to locate and embed mpv's child window — no
+/// internal poll/sleep loop. Meant to be called repeatedly from a caller
+/// that already has its own retry cadence (e.g. once per incoming mpv
+/// event), so a slow first attempt doesn't permanently strand video
+/// embedding: mpv's window-creation time varies (GPU/driver init, cold
+/// start) and has been observed taking well over the fast-path deadline
+/// below on real hardware.
+pub fn try_embed_once(parent: isize, mpv_pid: u32) -> Option<isize> {
+    win::try_embed_once(parent, mpv_pid)
+}
+
 /// Re-applies the full-client-rect position to an already-located mpv child
 /// window. Call on every `Resized`/`Moved`/scale-factor-changed event.
 pub fn resync(parent: isize, mpv_child: isize) -> Result<(), EmbedError> {
@@ -112,6 +123,23 @@ mod win {
         }
     }
 
+    pub fn try_embed_once(parent: isize, mpv_pid: u32) -> Option<isize> {
+        let mut ctx = FindByPid {
+            pid: mpv_pid,
+            found: None,
+        };
+        unsafe {
+            let _ = EnumChildWindows(
+                Some(HWND(parent as *mut c_void)),
+                Some(enum_proc),
+                LPARAM(&mut ctx as *mut _ as isize),
+            );
+        }
+        let child = ctx.found?;
+        resync(parent, child).ok()?;
+        Some(child)
+    }
+
     pub fn resync(parent: isize, mpv_child: isize) -> Result<(), EmbedError> {
         unsafe {
             let mut rect = RECT::default();
@@ -146,5 +174,9 @@ mod win {
 
     pub fn resync(_parent: isize, _mpv_child: isize) -> Result<(), EmbedError> {
         Err(EmbedError("window embedding is only supported on Windows".into()))
+    }
+
+    pub fn try_embed_once(_parent: isize, _mpv_pid: u32) -> Option<isize> {
+        None
     }
 }

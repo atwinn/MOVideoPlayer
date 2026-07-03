@@ -121,9 +121,27 @@ pub fn run() {
                             Ok(event) => {
                                 tracing::debug!("mpv event: {event:?}");
                                 let _ = app_handle.emit("mpv://event", &event);
+                                let state = app_handle.state::<AppState>();
                                 if let ControllerEvent::Crashed = event {
-                                    let state = app_handle.state::<AppState>();
                                     state.set_mpv_child_hwnd(0);
+                                } else if state.mpv_child_hwnd() == 0 {
+                                    // The one-shot embed attempt right after
+                                    // start() raced mpv's own window creation
+                                    // and lost (mpv's startup time varies —
+                                    // GPU/driver init, cold start — and has
+                                    // been observed taking well over that
+                                    // attempt's deadline). Retry on every
+                                    // subsequent event so embedding still
+                                    // converges instead of leaving the video
+                                    // surface stranded, unsized, for the rest
+                                    // of the session.
+                                    if let Some(pid) = mpv_controller.pid().await {
+                                        let main_hwnd = state.main_hwnd.load(std::sync::atomic::Ordering::Relaxed);
+                                        if let Some(child_hwnd) = window::embed::try_embed_once(main_hwnd, pid) {
+                                            tracing::info!("mpv child hwnd embedded (retry): {child_hwnd}");
+                                            state.set_mpv_child_hwnd(child_hwnd);
+                                        }
+                                    }
                                 }
                             }
                             Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
