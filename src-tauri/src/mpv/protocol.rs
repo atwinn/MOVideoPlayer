@@ -23,6 +23,17 @@ pub struct MpvResponse {
 pub enum MpvEvent {
     #[serde(rename = "property-change")]
     PropertyChange {
+        // mpv omits "id" entirely on the wire when the observed id is 0 —
+        // confirmed directly from a user-captured IPC trace, where every
+        // "time-pos" property-change (observed at id 0, first in
+        // OBSERVED_PROPERTIES below) arrived as
+        // `{"event":"property-change","name":"time-pos","data":...}` with
+        // no "id" key, while every other property (id >= 1) always
+        // included one. Without this default, every single time-pos
+        // update failed to deserialize and was silently dropped in
+        // ipc.rs's `if let Ok(event) = ...` — timePos in the frontend
+        // store never advanced past its initial 0 via push events at all.
+        #[serde(default)]
         id: u64,
         name: String,
         #[serde(default)]

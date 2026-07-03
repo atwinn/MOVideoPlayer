@@ -240,8 +240,16 @@ mod windows_impl {
         };
 
         if value.get("event").is_some() {
-            if let Ok(event) = serde_json::from_value::<MpvEvent>(value) {
-                let _ = client.inner.event_tx.send(event);
+            match serde_json::from_value::<MpvEvent>(value) {
+                Ok(event) => {
+                    let _ = client.inner.event_tx.send(event);
+                }
+                // Previously silent — a shape mismatch here (e.g. a field
+                // missing on the wire that our struct assumed was always
+                // present) meant that class of mpv event just vanished
+                // with no trace, forever, with nothing in the logs to
+                // point at it.
+                Err(e) => tracing::warn!("mpv ipc: failed to deserialize event: {e}; line={line}"),
             }
             return;
         }
