@@ -11,6 +11,9 @@ export type ToolbarPanel =
   | "volume"
   | "color"
   | "rotate"
+  | "substyle"
+  | "sync"
+  | "zoompan"
   | null;
 
 interface UiState {

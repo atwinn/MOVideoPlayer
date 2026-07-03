@@ -6,12 +6,16 @@ import {
   ListVideo,
   Maximize,
   Minimize,
+  Palette,
   RectangleHorizontal,
   Repeat,
   Repeat1,
   RotateCw,
   Settings,
   Sliders,
+  Timer,
+  Waves,
+  ZoomIn,
 } from "lucide-react";
 import { mpvSetProperty, openSettingsWindow, windowToggleFullscreen } from "../../lib/tauriCommands";
 import { usePlayerStore } from "../../store/playerStore";
@@ -23,9 +27,12 @@ import { ColorPanel } from "./panels/ColorPanel";
 import { LoopPanel } from "./panels/LoopPanel";
 import { RotatePanel } from "./panels/RotatePanel";
 import { SpeedPanel } from "./panels/SpeedPanel";
+import { SubtitleStylePanel } from "./panels/SubtitleStylePanel";
 import { SubtitleTrackPanel } from "./panels/SubtitleTrackPanel";
+import { SyncPanel } from "./panels/SyncPanel";
 import { VideoInfoPanel } from "./panels/VideoInfoPanel";
 import { VolumeIcon, VolumePanel } from "./panels/VolumePanel";
+import { ZoomPanPanel } from "./panels/ZoomPanPanel";
 
 /// Every toolbar entry is the same fixed square regardless of whether it
 /// opens a panel or fires immediately — mixing pill-shaped and square
@@ -73,6 +80,7 @@ export function Toolbar() {
   const muted = usePlayerStore((s) => s.muted);
   const hasChapters = usePlayerStore((s) => s.chapters.length > 0);
   const loopFile = usePlayerStore((s) => s.loopFile);
+  const deinterlace = usePlayerStore((s) => s.deinterlace);
   const chaptersOpen = activePanel === "chapters";
 
   return (
@@ -90,8 +98,14 @@ export function Toolbar() {
       <ToolbarButton icon={<Captions size={18} />} label="Subtitles" panel="subtitle">
         <SubtitleTrackPanel />
       </ToolbarButton>
+      <ToolbarButton icon={<Palette size={18} />} label="Subtitle style" panel="substyle">
+        <SubtitleStylePanel />
+      </ToolbarButton>
       <ToolbarButton icon={<AudioLines size={18} />} label="Audio track" panel="audio">
         <AudioTrackPanel />
+      </ToolbarButton>
+      <ToolbarButton icon={<Timer size={18} />} label="Audio/subtitle sync" panel="sync">
+        <SyncPanel />
       </ToolbarButton>
       <ToolbarButton icon={<RectangleHorizontal size={18} />} label="Aspect ratio" panel="aspect">
         <AspectRatioPanel />
@@ -102,6 +116,18 @@ export function Toolbar() {
       <ToolbarButton icon={<RotateCw size={18} />} label="Rotate" panel="rotate">
         <RotatePanel />
       </ToolbarButton>
+      <ToolbarButton icon={<ZoomIn size={18} />} label="Zoom / pan" panel="zoompan">
+        <ZoomPanPanel />
+      </ToolbarButton>
+      <button
+        type="button"
+        aria-label="Deinterlace"
+        title="Deinterlace"
+        onClick={() => void mpvSetProperty("deinterlace", !deinterlace)}
+        className={`${BUTTON_SIZE} ${deinterlace ? "bg-white/25" : "hover:bg-white/10"}`}
+      >
+        <Waves size={18} />
+      </button>
       <ToolbarButton icon={<Repeat size={18} />} label="Loop A-B" panel="loop">
         <LoopPanel />
       </ToolbarButton>
