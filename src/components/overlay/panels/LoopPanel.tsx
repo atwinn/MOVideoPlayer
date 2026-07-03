@@ -8,8 +8,29 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+/// Setting just ab-loop-a/ab-loop-b isn't quite enough on its own: mpv
+/// only actually loops while ab-loop-a < ab-loop-b (setting B before A, or
+/// re-marking A past the existing B, silently produces a non-looping pair
+/// with no error), and ab-loop-count needs to be explicitly infinite
+/// rather than relying on whatever this mpv build's default happens to
+/// be. Both points are always re-set together (as min/max of whichever
+/// was just marked vs. the other) so the loop is well-formed regardless
+/// of which button was pressed first.
+function setLoopPoint(point: "a" | "b") {
+  const { timePos, abLoopA, abLoopB } = usePlayerStore.getState();
+  const other = point === "a" ? abLoopB : abLoopA;
+  if (other === null) {
+    void mpvSetProperty(point === "a" ? "ab-loop-a" : "ab-loop-b", timePos);
+    return;
+  }
+  const a = Math.min(timePos, other);
+  const b = Math.max(timePos, other);
+  void mpvSetProperty("ab-loop-a", a);
+  void mpvSetProperty("ab-loop-b", b);
+  void mpvSetProperty("ab-loop-count", "inf");
+}
+
 export function LoopPanel() {
-  const timePos = usePlayerStore((s) => s.timePos);
   const abLoopA = usePlayerStore((s) => s.abLoopA);
   const abLoopB = usePlayerStore((s) => s.abLoopB);
   const active = abLoopA !== null && abLoopB !== null;
@@ -32,14 +53,14 @@ export function LoopPanel() {
       <div className="flex gap-1.5">
         <button
           type="button"
-          onClick={() => void mpvSetProperty("ab-loop-a", timePos)}
+          onClick={() => setLoopPoint("a")}
           className="flex-1 rounded-lg bg-white/10 px-2 py-1.5 text-xs hover:bg-white/20"
         >
           Set A
         </button>
         <button
           type="button"
-          onClick={() => void mpvSetProperty("ab-loop-b", timePos)}
+          onClick={() => setLoopPoint("b")}
           className="flex-1 rounded-lg bg-white/10 px-2 py-1.5 text-xs hover:bg-white/20"
         >
           Set B

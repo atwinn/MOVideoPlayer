@@ -159,9 +159,16 @@ pub async fn mpv_set_aspect(state: State<'_, AppState>, mode: AspectMode) -> Res
 
 /// Toggles a labeled entry in mpv's video filter chain (`vf`) — used for
 /// horizontal/vertical flip, which (unlike rotation) has no standalone
-/// property in mpv and only exists as a filter. The label lets us target
-/// exactly this filter for removal without touching anything else a user
-/// might add to `vf` later.
+/// property in mpv and only exists as a filter.
+///
+/// Manipulates the `vf` *property* directly (get the current filter list,
+/// remove any existing entry with this label, push a new one if enabling,
+/// set it back) rather than the string-based `vf add`/`vf <op>` *command*.
+/// The command form was tried first and used `"remove"` as the delete
+/// operation, which doesn't exist in mpv's `vf` command (the real
+/// operations are `set`/`add`/`toggle`/`del`/`clr`) — so every attempt to
+/// turn a flip back off silently errored. Manipulating the property
+/// directly sidesteps that whole string-operation vocabulary.
 #[tauri::command]
 pub async fn mpv_set_video_filter(
     state: State<'_, AppState>,
@@ -170,22 +177,12 @@ pub async fn mpv_set_video_filter(
     enabled: bool,
 ) -> Result<(), String> {
     let client = require_ipc(&state).await?;
+    let raw = client.get_property("vf").await?;
+    let mut list: Vec<Value> = serde_json::from_value(raw).unwrap_or_default();
+    list.retain(|entry| entry.get("label").and_then(|v| v.as_str()) != Some(label.as_str()));
     if enabled {
-        client
-            .command(vec![
-                Value::String("vf".into()),
-                Value::String("add".into()),
-                Value::String(format!("@{label}:{filter}")),
-            ])
-            .await?;
-    } else {
-        client
-            .command(vec![
-                Value::String("vf".into()),
-                Value::String("remove".into()),
-                Value::String(format!("@{label}")),
-            ])
-            .await?;
+        list.push(serde_json::json!({ "name": filter, "label": label }));
     }
+    client.set_property("vf", Value::Array(list)).await?;
     Ok(())
 }
