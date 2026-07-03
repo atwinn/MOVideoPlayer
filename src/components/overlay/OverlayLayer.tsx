@@ -15,6 +15,8 @@ export function OverlayLayer() {
   const cleanMode = useUiStore((s) => s.cleanMode);
   const showOverlay = useUiStore((s) => s.showOverlay);
   const toggleOverlay = useUiStore((s) => s.toggleOverlay);
+  const pauseHide = useUiStore((s) => s.pauseHide);
+  const resumeHide = useUiStore((s) => s.resumeHide);
   const activePanel = useUiStore((s) => s.activePanel);
   const setActivePanel = useUiStore((s) => s.setActivePanel);
   const panelAreaRef = useRef<HTMLDivElement>(null);
@@ -23,6 +25,12 @@ export function OverlayLayer() {
   const visibilityClass = controlsVisible
     ? "opacity-100"
     : "pointer-events-none opacity-0";
+  // Hidden (rather than just lower z-index) while a dropdown is open — a
+  // tall one (e.g. subtitle search results) sits right on top of the
+  // vertically-centered transport buttons otherwise, which read as
+  // overlapping, cluttered UI rather than two independent layers.
+  const centerVisibilityClass =
+    controlsVisible && activePanel === null ? "opacity-100" : "pointer-events-none opacity-0";
 
   // A toolbar dropdown (Volume/Speed/.../Chapters) previously only closed
   // by clicking its own toggle button again — clicking anywhere else (the
@@ -50,7 +58,7 @@ export function OverlayLayer() {
         if (e.target === e.currentTarget) toggleOverlay();
       }}
     >
-      <div ref={panelAreaRef}>
+      <div ref={panelAreaRef} onMouseEnter={pauseHide} onMouseLeave={resumeHide}>
         {!cleanMode && <ChapterPanel />}
 
         <div
@@ -68,7 +76,9 @@ export function OverlayLayer() {
       {/* Spec: five floating buttons centered in the video area — not
           stacked directly above the timeline. */}
       <div
-        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-200 ${visibilityClass}`}
+        onMouseEnter={pauseHide}
+        onMouseLeave={resumeHide}
+        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-200 ${centerVisibilityClass}`}
       >
         <CenterTransport />
       </div>

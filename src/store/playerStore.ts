@@ -42,6 +42,7 @@ interface PlayerState {
   /// Whole-file repeat (mpv's loop-file property: "no"/"inf"/a count) —
   /// distinct from the AB-loop region above.
   loopFile: boolean;
+  subFont: string;
   subFontSize: number;
   subColor: string;
   subBackColor: string;
@@ -95,6 +96,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   abLoopA: null,
   abLoopB: null,
   loopFile: false,
+  subFont: "Arial",
   subFontSize: 55,
   subColor: "#FFFFFFFF",
   subBackColor: "#00000000",
@@ -148,6 +150,8 @@ export const usePlayerStore = create<PlayerState>((set) => ({
           return { abLoopB: typeof data === "number" ? data : null };
         case "loop-file":
           return { loopFile: isLoopFileActive(data) };
+        case "sub-font":
+          return { subFont: typeof data === "string" ? data : state.subFont };
         case "sub-font-size":
           return { subFontSize: typeof data === "number" ? data : state.subFontSize };
         case "sub-color":
@@ -207,6 +211,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       abLoopA,
       abLoopB,
       loopFile,
+      subFont,
       subFontSize,
       subColor,
       subBackColor,
@@ -234,6 +239,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       mpvGetProperty<unknown>("ab-loop-a").then(asNumber).catch(() => undefined),
       mpvGetProperty<unknown>("ab-loop-b").then(asNumber).catch(() => undefined),
       mpvGetProperty<unknown>("loop-file").then(isLoopFileActive).catch(() => undefined),
+      mpvGetProperty<unknown>("sub-font").then(asString).catch(() => undefined),
       mpvGetProperty<number>("sub-font-size").catch(() => undefined),
       mpvGetProperty<unknown>("sub-color").then(asString).catch(() => undefined),
       mpvGetProperty<unknown>("sub-back-color").then(asString).catch(() => undefined),
@@ -262,6 +268,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       abLoopA: abLoopA ?? null,
       abLoopB: abLoopB ?? null,
       loopFile: loopFile ?? state.loopFile,
+      subFont: subFont ?? state.subFont,
       subFontSize: subFontSize ?? state.subFontSize,
       subColor: subColor ?? state.subColor,
       subBackColor: subBackColor ?? state.subBackColor,

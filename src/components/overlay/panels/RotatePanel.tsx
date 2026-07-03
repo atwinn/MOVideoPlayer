@@ -1,7 +1,7 @@
-import { RotateCw } from "lucide-react";
-
 import { mpvSetProperty } from "../../../lib/tauriCommands";
 import { usePlayerStore } from "../../../store/playerStore";
+
+const ANGLES = [0, 90, 180, 270] as const;
 
 export function RotatePanel() {
   const videoRotate = usePlayerStore((s) => s.videoRotate);
@@ -12,14 +12,20 @@ export function RotatePanel() {
         <span>Rotation</span>
         <span className="tabular-nums">{videoRotate}°</span>
       </div>
-      <button
-        type="button"
-        onClick={() => void mpvSetProperty("video-rotate", (videoRotate + 90) % 360)}
-        className="flex items-center justify-center gap-2 rounded-lg bg-white/10 px-2 py-2 text-xs hover:bg-white/20"
-      >
-        <RotateCw size={18} />
-        Rotate 90°
-      </button>
+      <div className="grid grid-cols-4 gap-1.5">
+        {ANGLES.map((angle) => (
+          <button
+            key={angle}
+            type="button"
+            onClick={() => void mpvSetProperty("video-rotate", angle)}
+            className={`rounded-lg px-2 py-1.5 text-xs tabular-nums transition-colors ${
+              videoRotate === angle ? "bg-white text-black" : "bg-white/10 hover:bg-white/20"
+            }`}
+          >
+            {angle}°
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -73,6 +73,7 @@ pub const OBSERVED_PROPERTIES: &[&str] = &[
     "ab-loop-a",
     "ab-loop-b",
     "loop-file",
+    "sub-font",
     "sub-font-size",
     "sub-color",
     "sub-back-color",

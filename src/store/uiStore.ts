@@ -11,10 +11,8 @@ export type ToolbarPanel =
   | "volume"
   | "color"
   | "rotate"
-  | "substyle"
   | "sync"
   | "zoompan"
-  | "subsearch"
   | null;
 
 interface UiState {
@@ -31,6 +29,13 @@ interface UiState {
   toggleCleanMode: () => void;
   setActivePanel: (panel: ToolbarPanel) => void;
   setFullscreen: (value: boolean) => void;
+  /// Sitting still over a control (e.g. waiting for a native title=""
+  /// tooltip to appear) fires no mousemove events, so showOverlay()'s own
+  /// timer was the only thing that could keep it visible — and that timer
+  /// just expired mid-read. Call on hover-enter over anything the overlay
+  /// covers; resumeHide restarts the countdown on hover-leave.
+  pauseHide: () => void;
+  resumeHide: () => void;
 }
 
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
@@ -75,4 +80,16 @@ export const useUiStore = create<UiState>((set, get) => ({
 
   setActivePanel: (panel) => set({ activePanel: panel }),
   setFullscreen: (value) => set({ isFullscreen: value }),
+
+  pauseHide: () => {
+    if (hideTimer) clearTimeout(hideTimer);
+  },
+
+  resumeHide: () => {
+    if (get().cleanMode) return;
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      if (get().activePanel === null) set({ overlayVisible: false });
+    }, get().hideTimeoutMs);
+  },
 }));
